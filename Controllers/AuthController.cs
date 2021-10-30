@@ -51,7 +51,7 @@ namespace Api.Controllers
         [HttpPost]
         //TODO: replace object with concrete type
         //Registers new account if provided with valid Google token 
-        public async Task<object> GoogleRegister()
+        public async Task<IActionResult> GoogleRegister()
         {
             if (!Request.Headers.ContainsKey("Authorization"))
                 return BadRequest("Missing Authorization header");
@@ -59,10 +59,7 @@ namespace Api.Controllers
             var authToken = Request.Headers["Authorization"];
             try
             {
-                //TODO SECURITY: Verify Audience
                 //TODO SECURITY: Verify Issuer
-                //Aleardy checked behaviours: 
-                //Checks expiration
                 var googleJWTPayload = await GoogleJsonWebSignature.ValidateAsync(authToken, new ValidationSettings()
                 {
                     Audience = new List<string> {
@@ -101,11 +98,11 @@ namespace Api.Controllers
         [Route("register/facebook")]
         [HttpPost]
         //TODO: replace object with concrete type
-        public async Task<object> FacebookRegister()
+        public async Task<IActionResult> FacebookRegister()
         {
             if (!Request.Headers.ContainsKey("Authorization"))
                 return BadRequest("Missing Authorization header");
-                
+
             var authToken = Request.Headers["Authorization"];
 
             var httpClient = _clientFactory.CreateClient();
