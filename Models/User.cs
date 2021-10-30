@@ -10,7 +10,8 @@ namespace Api.Models
     public class User
     {
         [Key]
-        public int Id { get; set; }
+        //Internal API
+        public int Id { get; set; } 
         public string GoogleId { get; set; }
         public string FacebookId { get; set; }
         

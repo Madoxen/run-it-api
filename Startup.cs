@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Api.Configuration.Options;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -31,10 +32,12 @@ namespace Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<FacebookOptions>(Configuration.GetSection("Authentication:Facebook"));
+            services.Configure<AuthenticationOptions>(Configuration.GetSection("Authentication"));
             //TODO: write it nicer
             string DBConnectionString = Configuration["Database:ConnectionStringTemplate"];
 
-            Console.WriteLine(DBConnectionString);
+
 
             services.AddDbContext<AppContext>(options => options.UseNpgsql(DBConnectionString));
 
@@ -68,6 +71,8 @@ namespace Api
                     policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
                     policy.RequireAuthenticatedUser();
                 }));
+
+            services.AddHttpClient();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
