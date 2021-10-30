@@ -53,12 +53,12 @@ namespace Api.Controllers
         //Registers new account if provided with valid Google token 
         public async Task<object> GoogleRegister()
         {
-            //TODO: handle google token
+            if (!Request.Headers.ContainsKey("Authorization"))
+                return BadRequest("Missing Authorization header");
+
+            var authToken = Request.Headers["Authorization"];
             try
             {
-                //TODO: fail with Unauth or Bad request if Authorization is not sent
-                var authToken = Request.Headers["Authorization"];
-
                 //TODO SECURITY: Verify Audience
                 //TODO SECURITY: Verify Issuer
                 //Aleardy checked behaviours: 
@@ -103,7 +103,9 @@ namespace Api.Controllers
         //TODO: replace object with concrete type
         public async Task<object> FacebookRegister()
         {
-            //TODO: fail with Unauth or Bad request if Authorization is not sent
+            if (!Request.Headers.ContainsKey("Authorization"))
+                return BadRequest("Missing Authorization header");
+                
             var authToken = Request.Headers["Authorization"];
 
             var httpClient = _clientFactory.CreateClient();
