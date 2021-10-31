@@ -166,7 +166,7 @@ namespace Api.Controllers
                 {
                     new Claim(ClaimTypes.Name, "All")
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(20),
+                Expires = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Authentication:JWT:ExpiryMinutes"])),
                 Issuer = _configuration["Authentication:JWT:Issuer"],
                 Audience = _configuration["Authentication:JWT:Audience"],
                 SigningCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature)
