@@ -26,6 +26,14 @@ namespace Api.Controllers
             return Ok(result);
         }
 
+        [Authorize]
+        [HttpDelete]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _userRepository.Delete(id);
+            return Ok();
+        }
+
 
     }
 }

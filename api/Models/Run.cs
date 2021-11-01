@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +11,7 @@ namespace Api.Models
         public int Id { get; set; }
         public uint Duration { get; set; } //in seconds
         public uint ElevationDelta { get; set; } //in meters
+        public DateTime Date { get; set; }
         public byte[] Points { get; set; } //points tuple vector --- (lat, long)
     }
 }
