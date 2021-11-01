@@ -11,6 +11,6 @@ namespace Api
         }
 
         public DbSet<User> Users { get; set; }
-
+        public DbSet<Run> Runs { get; set; }
     }
 }
