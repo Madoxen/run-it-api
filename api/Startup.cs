@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Api.Configuration.Options;
+using Api.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -39,7 +40,7 @@ namespace Api
 
 
 
-            services.AddDbContext<AppContext>(options => options.UseNpgsql(DBConnectionString));
+            services.AddDbContext<ApiContext>(options => options.UseNpgsql(DBConnectionString));
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
@@ -73,6 +74,8 @@ namespace Api
                 }));
 
             services.AddHttpClient();
+            
+            services.AddScoped<UserRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

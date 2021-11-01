@@ -3,14 +3,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Api
 {
-    public class AppContext : DbContext
+    public class ApiContext : DbContext
     {
-        public AppContext (DbContextOptions<AppContext> options)
+        public ApiContext (DbContextOptions<ApiContext> options)
             : base(options)
         {
         }
 
         public DbSet<User> Users { get; set; }
-
+        public DbSet<Run> Runs { get; set; }
     }
 }

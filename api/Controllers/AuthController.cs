@@ -31,12 +31,12 @@ namespace Api.Controllers
         private readonly IHttpClientFactory _clientFactory;
         private readonly ILogger<AuthController> _logger;
         private readonly IConfiguration _configuration;
-        private readonly AppContext _dbContext;
+        private readonly ApiContext _dbContext;
         private readonly AuthenticationOptions _authOptions;
 
         public AuthController(ILogger<AuthController> logger,
                               IConfiguration configuration,
-                              AppContext dbContext,
+                              ApiContext dbContext,
                               IHttpClientFactory clientFactory,
                               IOptions<AuthenticationOptions> authOptions)
         {
