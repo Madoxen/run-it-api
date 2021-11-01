@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\run-it-api\run-it-api.csproj" />
+    <ProjectReference Include="..\api\run-it-api.csproj" />
   </ItemGroup>
 
 </Project>
