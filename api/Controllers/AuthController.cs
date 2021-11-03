@@ -21,6 +21,7 @@ using Api.Configuration.Options;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Api.Controllers
 {
@@ -72,7 +73,12 @@ namespace Api.Controllers
                 //Check if the user already exists in DB
                 var sub = googleJWTPayload.Subject;
                 if (await _dbContext.Users.FirstOrDefaultAsync(x => x.GoogleId == sub) != null)
-                    return Ok(new { token = CreateJWTString(), token_type = "bearer" }); //log in if exists
+                    return Ok(new
+                    {
+                        access_token = CreateJWTString(),
+                        refresh_token = CreateJWTString(new Claim[] { new Claim(ClaimTypes.Name, "Refresh") }),
+                        token_type = "bearer"
+                    });
 
                 //if user does not exists
                 //create an account
@@ -91,7 +97,12 @@ namespace Api.Controllers
             }
 
             // Returns the 'access_token' and the type in lower case
-            return Ok(new { token = CreateJWTString(), token_type = "bearer" });
+            return Ok(new
+            {
+                access_token = CreateJWTString(),
+                refresh_token = CreateJWTString(new Claim[] { new Claim(ClaimTypes.Name, "Refresh") }),
+                token_type = "bearer"
+            });
         }
 
 
@@ -135,7 +146,12 @@ namespace Api.Controllers
             //Create new account
             var sub = payload.UserId;
             if (await _dbContext.Users.FirstOrDefaultAsync(x => x.FacebookId == sub) != null)
-                return Ok(new { token = CreateJWTString(), token_type = "bearer" }); //log in if exists
+                return Ok(new
+                {
+                    access_token = CreateJWTString(),
+                    refresh_token = CreateJWTString(new Claim[] { new Claim("func", "Refresh") }),
+                    token_type = "bearer"
+                });
 
             //if user does not exists
             //create an account
@@ -150,22 +166,41 @@ namespace Api.Controllers
 
 
             // Returns the 'access_token' and the type in lower case
-            return Ok(new { token = CreateJWTString(), token_type = "bearer" });
+            return Ok(new
+            {
+                access_token = CreateJWTString(),
+                refresh_token = CreateJWTString(new Claim[] { new Claim("func", "Refresh") }),
+                token_type = "bearer"
+            });
+        }
+
+        [Route("refresh")]
+        [HttpGet]
+        [Authorize(Policy = "TokenHasRefreshClaim")]
+        public async Task<IActionResult> GetRefereshToken()
+        {
+            if (!Request.Headers.ContainsKey("Authorization"))
+                return BadRequest("Missing Authorization header");
+
+            var authToken = Request.Headers["Authorization"];
+            return Ok(CreateJWTString(new Claim[] { new Claim("func", "Refresh") }));
         }
 
         // Creates the signed JWT
         // With set of standard claims
         private string CreateJWTString()
         {
+            return CreateJWTString(new Claim[] { new Claim("func", "All") });
+        }
+
+        private string CreateJWTString(Claim[] claims)
+        {
             //TODO: evaluate this copied code 
             var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Authentication:JWT:Key"]));
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new Claim[]
-                {
-                    new Claim(ClaimTypes.Name, "All")
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Authentication:JWT:ExpiryMinutes"])),
                 Issuer = _configuration["Authentication:JWT:Issuer"],
                 Audience = _configuration["Authentication:JWT:Audience"],
