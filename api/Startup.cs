@@ -67,14 +67,19 @@ namespace Api
                 });
 
             services.AddAuthorization(options =>
+            {
                 options.AddPolicy("ValidAccessToken", policy =>
                 {
                     policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
                     policy.RequireAuthenticatedUser();
-                }));
+                });
+                options.AddPolicy("TokenHasRefreshClaim", policy => {
+                    policy.RequireClaim("Refresh");
+                });
+            });
 
             services.AddHttpClient();
-            
+
             services.AddScoped<UserRepository>();
         }
 
