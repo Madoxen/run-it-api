@@ -74,7 +74,8 @@ namespace Api
                     policy.RequireAuthenticatedUser();
                 });
                 options.AddPolicy("TokenHasRefreshClaim", policy => {
-                    policy.RequireClaim("Refresh");
+                    policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+                    policy.RequireClaim("scope","Refresh");
                 });
             });
 
@@ -98,6 +99,7 @@ namespace Api
             app.UseRouting();
 
             app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
