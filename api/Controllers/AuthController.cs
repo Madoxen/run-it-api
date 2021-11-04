@@ -57,7 +57,11 @@ namespace Api.Controllers
             if (!Request.Headers.ContainsKey("Authorization"))
                 return BadRequest("Missing Authorization header");
 
-            var authToken = Request.Headers["Authorization"];
+            string authToken = Request.Headers["Authorization"];
+            if (authToken.StartsWith("Bearer "))
+                authToken = new string(authToken.Skip(7).ToArray());
+            
+
             try
             {
                 //TODO SECURITY: Verify Issuer
@@ -76,8 +80,8 @@ namespace Api.Controllers
                     return Ok(new
                     {
                         access_token = CreateJWTString(),
-                        refresh_token = CreateJWTString(new Claim[] { new Claim(ClaimTypes.Name, "Refresh") }),
-                        token_type = "bearer"
+                        refresh_token = CreateJWTString(new Claim[] { new Claim("scope", "Refresh") }),
+
                     });
 
                 //if user does not exists
@@ -100,8 +104,8 @@ namespace Api.Controllers
             return Ok(new
             {
                 access_token = CreateJWTString(),
-                refresh_token = CreateJWTString(new Claim[] { new Claim(ClaimTypes.Name, "Refresh") }),
-                token_type = "bearer"
+                refresh_token = CreateJWTString(new Claim[] { new Claim("scope", "Refresh") }),
+
             });
         }
 
@@ -114,7 +118,9 @@ namespace Api.Controllers
             if (!Request.Headers.ContainsKey("Authorization"))
                 return BadRequest("Missing Authorization header");
 
-            var authToken = Request.Headers["Authorization"];
+            string authToken = Request.Headers["Authorization"];
+            if (authToken.StartsWith("Bearer "))
+                authToken = new string(authToken.Skip(7).ToArray());
 
             var httpClient = _clientFactory.CreateClient();
             var response = await httpClient.SendAsync(new HttpRequestMessage()
@@ -149,8 +155,7 @@ namespace Api.Controllers
                 return Ok(new
                 {
                     access_token = CreateJWTString(),
-                    refresh_token = CreateJWTString(new Claim[] { new Claim("func", "Refresh") }),
-                    token_type = "bearer"
+                    refresh_token = CreateJWTString(new Claim[] { new Claim("scope", "Refresh") }),
                 });
 
             //if user does not exists
@@ -169,8 +174,7 @@ namespace Api.Controllers
             return Ok(new
             {
                 access_token = CreateJWTString(),
-                refresh_token = CreateJWTString(new Claim[] { new Claim("func", "Refresh") }),
-                token_type = "bearer"
+                refresh_token = CreateJWTString(new Claim[] { new Claim("scope", "Refresh") }),
             });
         }
 
@@ -182,15 +186,22 @@ namespace Api.Controllers
             if (!Request.Headers.ContainsKey("Authorization"))
                 return BadRequest("Missing Authorization header");
 
-            var authToken = Request.Headers["Authorization"];
-            return Ok(CreateJWTString(new Claim[] { new Claim("func", "Refresh") }));
+            string authToken = Request.Headers["Authorization"];
+            if (authToken.StartsWith("Bearer "))
+                authToken = new string(authToken.Skip(7).ToArray());
+                
+            return Ok(new
+            {
+                access_token = CreateJWTString(),
+                refresh_token = CreateJWTString(new Claim[] { new Claim("scope", "Refresh") }),
+            });
         }
 
         // Creates the signed JWT
         // With set of standard claims
         private string CreateJWTString()
         {
-            return CreateJWTString(new Claim[] { new Claim("func", "All") });
+            return CreateJWTString(new Claim[] { new Claim("scope", "Access") });
         }
 
         private string CreateJWTString(Claim[] claims)
