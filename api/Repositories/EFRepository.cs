@@ -1,6 +1,8 @@
 using Api.Models;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Api.Repositories
@@ -24,14 +26,11 @@ namespace Api.Repositories
         {
             var entity = await context.Set<TEntity>().FindAsync(id);
             if (entity == null)
-            {
                 return;
-            }
+
 
             context.Set<TEntity>().Remove(entity);
             await context.SaveChangesAsync();
-
-            return;
         }
 
         public async Task<TEntity> Get(int id)
@@ -39,7 +38,12 @@ namespace Api.Repositories
             return await context.Set<TEntity>().FindAsync(id);
         }
 
-        public async Task<List<TEntity>> GetAll()
+        public async Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
+        {
+            return await context.Set<TEntity>().FirstOrDefaultAsync(predicate);
+        }
+
+        public async Task<IEnumerable<TEntity>> GetAll()
         {
             return await context.Set<TEntity>().ToListAsync();
         }
@@ -49,6 +53,5 @@ namespace Api.Repositories
             context.Entry(entity).State = EntityState.Modified;
             await context.SaveChangesAsync();
         }
-
     }
 }

@@ -3,6 +3,7 @@ using Api.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Api.Models;
 
 namespace Api.Controllers
 {
@@ -33,7 +34,5 @@ namespace Api.Controllers
             await _userRepository.Delete(id);
             return Ok();
         }
-
-
     }
 }

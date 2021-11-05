@@ -22,6 +22,9 @@ using Microsoft.Extensions.Options;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
+using Api.Repositories;
+using Api.Payloads;
+using System.Runtime.CompilerServices;
 
 namespace Api.Controllers
 {
@@ -30,20 +33,14 @@ namespace Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IHttpClientFactory _clientFactory;
-        private readonly ILogger<AuthController> _logger;
-        private readonly IConfiguration _configuration;
-        private readonly ApiContext _dbContext;
+        private readonly IUserRepository _userRepository;
         private readonly AuthenticationOptions _authOptions;
 
-        public AuthController(ILogger<AuthController> logger,
-                              IConfiguration configuration,
-                              ApiContext dbContext,
+        public AuthController(IUserRepository userRepository,
                               IHttpClientFactory clientFactory,
                               IOptions<AuthenticationOptions> authOptions)
         {
-            _logger = logger;
-            _configuration = configuration;
-            _dbContext = dbContext;
+            _userRepository = userRepository;
             _clientFactory = clientFactory;
             _authOptions = authOptions.Value;
         }
@@ -52,7 +49,7 @@ namespace Api.Controllers
         [HttpPost]
         //TODO: replace object with concrete type
         //Registers new account if provided with valid Google token 
-        public async Task<IActionResult> GoogleRegister()
+        public async Task<ActionResult<JWTAuthPayload>> GoogleRegister()
         {
             if (!Request.Headers.ContainsKey("Authorization"))
                 return BadRequest("Missing Authorization header");
@@ -60,7 +57,7 @@ namespace Api.Controllers
             string authToken = Request.Headers["Authorization"];
             if (authToken.StartsWith("Bearer "))
                 authToken = new string(authToken.Skip(7).ToArray());
-            
+
 
             try
             {
@@ -68,21 +65,17 @@ namespace Api.Controllers
                 var googleJWTPayload = await GoogleJsonWebSignature.ValidateAsync(authToken, new ValidationSettings()
                 {
                     Audience = new List<string> {
-                        _configuration["IosID"],
-                        _configuration["ClientID"]
+                        _authOptions.Google.ClientID,
+                        _authOptions.Google.IosID
                     },
                 });
 
                 //Create new account
                 //Check if the user already exists in DB
                 var sub = googleJWTPayload.Subject;
-                if (await _dbContext.Users.FirstOrDefaultAsync(x => x.GoogleId == sub) != null)
-                    return Ok(new
-                    {
-                        access_token = CreateJWTString(),
-                        refresh_token = CreateJWTString(new Claim[] { new Claim("scope", "Refresh") }),
-
-                    });
+                User user = await _userRepository.FirstOrDefaultAsync(x => x.GoogleId == sub);
+                if (user != null)
+                    return CreateJwtAuthPayload(user.Id);
 
                 //if user does not exists
                 //create an account
@@ -92,34 +85,27 @@ namespace Api.Controllers
                     FacebookId = null,
                 };
 
-                await _dbContext.Users.AddAsync(u);
-                await _dbContext.SaveChangesAsync();
+                await _userRepository.Add(u);
+                // Returns the 'access_token' and the type in lower case
+                return CreateJwtAuthPayload(user.Id);
             }
             catch (InvalidJwtException e)
             {
                 return Unauthorized("Invalid token: " + e.Message);
             }
-
-            // Returns the 'access_token' and the type in lower case
-            return Ok(new
-            {
-                access_token = CreateJWTString(),
-                refresh_token = CreateJWTString(new Claim[] { new Claim("scope", "Refresh") }),
-
-            });
         }
 
 
         [Route("register/facebook")]
         [HttpPost]
         //TODO: replace object with concrete type
-        public async Task<IActionResult> FacebookRegister()
+        public async Task<ActionResult<JWTAuthPayload>> FacebookRegister()
         {
             if (!Request.Headers.ContainsKey("Authorization"))
                 return BadRequest("Missing Authorization header");
 
             string authToken = Request.Headers["Authorization"];
-            if (authToken.StartsWith("Bearer "))
+            if (authToken.StartsWith("Bearer ")) //strip bearer
                 authToken = new string(authToken.Skip(7).ToArray());
 
             var httpClient = _clientFactory.CreateClient();
@@ -150,71 +136,66 @@ namespace Api.Controllers
 
             //Finally check if the user exists in the database
             //Create new account
-            var sub = payload.UserId;
-            if (await _dbContext.Users.FirstOrDefaultAsync(x => x.FacebookId == sub) != null)
-                return Ok(new
-                {
-                    access_token = CreateJWTString(),
-                    refresh_token = CreateJWTString(new Claim[] { new Claim("scope", "Refresh") }),
-                });
+            string sub = payload.UserId;
+            User user = await _userRepository.FirstOrDefaultAsync(x => x.FacebookId == sub);
+            if (user != null)
+                return CreateJwtAuthPayload(user.Id);
 
             //if user does not exists
             //create an account
-            User u = new User()
+            user = new User()
             {
                 GoogleId = null,
                 FacebookId = sub,
             };
 
-            await _dbContext.Users.AddAsync(u);
-            await _dbContext.SaveChangesAsync();
-
+            await _userRepository.Add(user);
 
             // Returns the 'access_token' and the type in lower case
-            return Ok(new
-            {
-                access_token = CreateJWTString(),
-                refresh_token = CreateJWTString(new Claim[] { new Claim("scope", "Refresh") }),
-            });
+            return CreateJwtAuthPayload(user.Id);
         }
 
         [Route("refresh")]
         [HttpGet]
         [Authorize(Policy = "TokenHasRefreshClaim")]
-        public async Task<IActionResult> GetRefereshToken()
+        public async Task<ActionResult<JWTAuthPayload>> GetRefereshToken()
         {
-            if (!Request.Headers.ContainsKey("Authorization"))
-                return BadRequest("Missing Authorization header");
-
-            string authToken = Request.Headers["Authorization"];
-            if (authToken.StartsWith("Bearer "))
-                authToken = new string(authToken.Skip(7).ToArray());
-                
-            return Ok(new
-            {
-                access_token = CreateJWTString(),
-                refresh_token = CreateJWTString(new Claim[] { new Claim("scope", "Refresh") }),
-            });
+            //TODO: Handle bad id format 
+            var id = int.Parse(User.Claims.First(x => x.Type == "sub").Value);
+            return CreateJwtAuthPayload(id);
         }
 
-        // Creates the signed JWT
-        // With set of standard claims
-        private string CreateJWTString()
+        private JWTAuthPayload CreateJwtAuthPayload(int userId)
         {
-            return CreateJWTString(new Claim[] { new Claim("scope", "Access") });
+            return new JWTAuthPayload()
+            {
+                access_token = CreateAccessToken(userId),
+                refresh_token = CreateRefreshToken(userId),
+                user_id = userId
+            };
+        }
+
+        private string CreateAccessToken(int userId)
+        {
+            return CreateJWTString(new Claim[] { new Claim("scope", "Access"), new Claim("sub", userId.ToString()) });
+        }
+
+        private string CreateRefreshToken(int userId)
+        {
+            return CreateJWTString(new Claim[] { new Claim("scope", "Refresh"), new Claim("sub", userId.ToString()) });
         }
 
         private string CreateJWTString(Claim[] claims)
         {
             //TODO: evaluate this copied code 
-            var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Authentication:JWT:Key"]));
+            var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_authOptions.JWT.Key));
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Authentication:JWT:ExpiryMinutes"])),
-                Issuer = _configuration["Authentication:JWT:Issuer"],
-                Audience = _configuration["Authentication:JWT:Audience"],
+                Expires = DateTime.UtcNow.AddMinutes(_authOptions.JWT.ExpiryMinutes),
+                Issuer = _authOptions.JWT.Issuer,
+                Audience = _authOptions.JWT.Audience, //TODO SECURITY: verify audience? 
                 SigningCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);

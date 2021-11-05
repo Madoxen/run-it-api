@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Api
+namespace Api.Payloads
 {
     //Payload from debug_token
     public class FacebookAuthPayload

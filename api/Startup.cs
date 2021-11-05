@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -49,7 +50,7 @@ namespace Api
             });
 
             var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Authentication:JWT:Key"]));
-
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear(); //PLS REMEMBER THAT MATE WHEN DOING AUTHORIZATION
             services.AddAuthentication(options =>
                 {
                     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -73,15 +74,16 @@ namespace Api
                     policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
                     policy.RequireAuthenticatedUser();
                 });
-                options.AddPolicy("TokenHasRefreshClaim", policy => {
+                options.AddPolicy("TokenHasRefreshClaim", policy =>
+                {
                     policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
-                    policy.RequireClaim("scope","Refresh");
+                    policy.RequireClaim("scope", "Refresh");
                 });
             });
 
             services.AddHttpClient();
 
-            services.AddScoped<UserRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

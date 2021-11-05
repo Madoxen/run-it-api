@@ -45,6 +45,5 @@ namespace Api.Tests
             Assert.IsType<OkObjectResult>(result);
             Assert.Null(((OkObjectResult)result).Value);
         }
-
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Api.Models;
 using Api.Repositories;
@@ -22,12 +23,17 @@ namespace Api.Tests.Mocks
             ));
         }
 
+        public async Task<User> FirstOrDefaultAsync(Expression<Func<User, bool>> predicate)
+        {
+            return store.Find(predicate.Compile().Invoke);
+        }
+
         public async Task<User> Get(int id)
         {
             return store.Find(x => x.Id == id);
         }
 
-        public async Task<List<User>> GetAll()
+        public async Task<IEnumerable<User>> GetAll()
         {
             return store;
         }

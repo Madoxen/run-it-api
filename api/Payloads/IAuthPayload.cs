@@ -1,7 +1,0 @@
-namespace Api
-{
-    interface IAuthPayload
-    {
-
-    }
-}
