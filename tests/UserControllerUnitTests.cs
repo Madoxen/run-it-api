@@ -45,5 +45,34 @@ namespace Api.Tests
             Assert.IsType<OkObjectResult>(result);
             Assert.Null(((OkObjectResult)result).Value);
         }
+
+        [Fact]
+        public async void TestDeleteEndpointWithExistingID()
+        {
+            //Arrange
+            MockUserRepo repo = new MockUserRepo();
+            UserController controller = new UserController(repo);
+            await repo.Add(new User() { Id = 1 });
+            
+            //Act
+            await controller.Delete(1);
+            var result = await repo.Get(1);
+
+            //Assert
+            Assert.Null(result);
+        }
+
+
+        [Fact]
+        public async void TestDeleteEndpointWithNonExistantID()
+        {
+            //Arrange
+            MockUserRepo repo = new MockUserRepo();
+            UserController controller = new UserController(repo);
+            await repo.Add(new User() { Id = 2 });
+
+            //Act
+            await controller.Delete(1);            
+        }
     }
 }
