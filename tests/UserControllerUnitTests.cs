@@ -16,16 +16,24 @@ using Microsoft.Extensions.Options;
 using Api.Configuration.Options;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Api.Test.Mocks;
 
 namespace Api.Tests
 {
 
     public class UserControllerUnitTests
     {
+        private enum UserAuthorizationHandlerMode
+        {
+            SUCC = 0,
+            FAIL = 1,
+        }
+
         private async Task<UserController> Arrange(
             IUserRepository repo = null,
             IAuthorizationService authService = null,
-            List<Claim> claims = null)
+            List<Claim> claims = null,
+            UserAuthorizationHandlerMode handlerType = UserAuthorizationHandlerMode.SUCC)
         {
             //Arrange user repository and add an user
             if (repo == null)
@@ -72,7 +80,11 @@ namespace Api.Tests
                 //Create authorization service
                 authService = Builders.BuildAuthorizationService(services =>
                 {
-                    services.AddScoped<IAuthorizationHandler, UserAuthorizationHandler>();
+                    if (handlerType == UserAuthorizationHandlerMode.SUCC)
+                        services.AddScoped<IAuthorizationHandler, MockUserAuthorizationHandlerSuccess>();
+
+                    if (handlerType == UserAuthorizationHandlerMode.FAIL)
+                        services.AddScoped<IAuthorizationHandler, MockUserAuthorizationHandlerFail>();
 
                     services.AddAuthorization(options =>
                     {
@@ -195,12 +207,9 @@ namespace Api.Tests
         public async void TestGetUnauthorized()
         {
             //Arrange
-            MockUserRepo repo = new MockUserRepo();
-            await repo.Add(new User() { Id = 1, Weight = 1 });
-            await repo.Add(new User() { Id = 2, Weight = 1 });
-            UserController controller = await Arrange(repo);
+            UserController controller = await Arrange(handlerType: UserAuthorizationHandlerMode.FAIL);
             //Act
-            var result = await controller.Get(2);
+            var result = await controller.Get(1);
             //Assert
             Assert.IsType<UnauthorizedResult>(result.Result);
             Assert.Null(result.Value);
@@ -212,17 +221,16 @@ namespace Api.Tests
             //Arrange
             MockUserRepo repo = new MockUserRepo();
             await repo.Add(new User() { Id = 1, Weight = 1 });
-            await repo.Add(new User() { Id = 2, Weight = 1 });
-            UserController controller = await Arrange(repo);
+            UserController controller = await Arrange(repo: repo, handlerType: UserAuthorizationHandlerMode.FAIL);
             //Act
             var result = await controller.Put(new Payloads.UserPayload()
             {
-                Id = 2,
+                Id = 1,
                 Weight = 10
             });
             //Assert
             Assert.IsType<UnauthorizedResult>(result);
-            Assert.Equal(1, (await repo.Get(2)).Weight);
+            Assert.Equal(1, (await repo.Get(1)).Weight);
         }
 
         [Fact]
@@ -231,13 +239,12 @@ namespace Api.Tests
             //Arrange
             MockUserRepo repo = new MockUserRepo();
             await repo.Add(new User() { Id = 1, Weight = 1 });
-            await repo.Add(new User() { Id = 2, Weight = 1 });
-            UserController controller = await Arrange(repo);
+            UserController controller = await Arrange(repo: repo, handlerType: UserAuthorizationHandlerMode.FAIL);
             //Act
-            var result = await controller.Delete(2);
+            var result = await controller.Delete(1);
             //Assert
             Assert.IsType<UnauthorizedResult>(result);
-            Assert.NotNull(await repo.Get(2));
+            Assert.NotNull(await repo.Get(1));
         }
 
     }
