@@ -58,7 +58,6 @@ namespace Api.Controllers
             if (authToken.StartsWith("Bearer "))
                 authToken = new string(authToken.Skip(7).ToArray());
 
-
             try
             {
                 //TODO SECURITY: Verify Issuer
