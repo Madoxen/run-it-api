@@ -30,7 +30,7 @@ namespace Api.Tests.Mocks
 
         public async Task<User> Get(int id)
         {
-            return store.Find(x => x.Id == id);
+            return await Task.Run(() => store.Find(x => x.Id == id));
         }
 
         public async Task<IEnumerable<User>> GetAll()
@@ -40,7 +40,8 @@ namespace Api.Tests.Mocks
 
         public async Task Update(User entity)
         {
-            throw new NotImplementedException();
+            var user_index = store.FindIndex(x => x.Id == entity.Id);
+            store[user_index] = entity;
         }
     }
 }

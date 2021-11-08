@@ -30,6 +30,7 @@ namespace Api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [AllowAnonymous]
     public class AuthController : ControllerBase
     {
         private readonly IHttpClientFactory _clientFactory;
