@@ -1,23 +1,31 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Api.Models;
 using Microsoft.AspNetCore.Authorization;
 
-public class UserAuthorizationHandler :
-    AuthorizationHandler<SameUserIDRequirement, User>
+namespace Api.Handlers
 {
-    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context,
-                                                   SameUserIDRequirement requirement,
-                                                   User user)
+    public class UserAuthorizationHandler :
+        AuthorizationHandler<SameUserIDRequirement, User>
     {
-        Console.WriteLine($"xd: {context.User.Identity?.Name}");
-        if (context.User.Identity?.Name == user.Id.ToString())
+        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context,
+                                                       SameUserIDRequirement requirement,
+                                                       User user)
         {
-            context.Succeed(requirement);
+
+            if (context.User?.Claims?.FirstOrDefault(x => x.Type == "sub")?.Value == user.Id.ToString())
+            {
+                context.Succeed(requirement);
+            }
+            else
+            {
+                context.Fail();
+            }
+
+            return Task.CompletedTask;
         }
-
-        return Task.CompletedTask;
     }
-}
 
-public class SameUserIDRequirement : IAuthorizationRequirement { }
+    public class SameUserIDRequirement : IAuthorizationRequirement { }
+}
