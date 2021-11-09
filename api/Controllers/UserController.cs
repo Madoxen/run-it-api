@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Api.Models;
+using Api.Handlers;
+using Api.Payloads;
 
 namespace Api.Controllers
 {
@@ -12,27 +14,81 @@ namespace Api.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserRepository _userRepository;
+        private readonly IAuthorizationService _authorizationService;
 
-        public UserController(IUserRepository userRepository)
+        public UserController(IUserRepository userRepository, IAuthorizationService authorizationService)
         {
             _userRepository = userRepository;
+            _authorizationService = authorizationService;
         }
 
         //Gets user profile information
-        [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> Get(int id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<User>> Get(int id)
         {
-            var result = await _userRepository.Get(id);
-            return Ok(result);
+            User result = await _userRepository.Get(id);
+            if (result == null)
+                return NotFound();
+
+            var authorizationResult = await _authorizationService
+                    .AuthorizeAsync(User, result, "CheckUserIDResourceAccess");
+
+
+            if (authorizationResult.Succeeded)
+            {
+                return result;
+            }
+            else
+            {
+                return Unauthorized();
+            }
         }
 
-        [Authorize]
-        [HttpDelete]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            await _userRepository.Delete(id);
-            return Ok();
+            User result = await _userRepository.Get(id);
+            if (result == null)
+                return NotFound();
+
+            var authorizationResult = await _authorizationService
+                    .AuthorizeAsync(User, result, "CheckUserIDResourceAccess");
+
+
+            if (authorizationResult.Succeeded)
+            {
+                await _userRepository.Delete(id);
+                return Ok();
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+
+        [HttpPut]
+        public async Task<IActionResult> Put(UserPayload payload)
+        {
+            User result = await _userRepository.Get(payload.Id);
+            if (result == null)
+                return NotFound();
+
+            var authorizationResult = await _authorizationService
+                    .AuthorizeAsync(User, result, "CheckUserIDResourceAccess");
+
+
+            if (authorizationResult.Succeeded)
+            {
+                User user = await _userRepository.Get(payload.Id);
+                payload.ApplyToModel(user);
+                await _userRepository.Update(user);
+                return Ok();
+            }
+            else
+            {
+                return Unauthorized();
+            }
         }
     }
 }
