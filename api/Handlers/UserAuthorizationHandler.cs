@@ -13,7 +13,6 @@ namespace Api.Handlers
                                                        SameUserIDRequirement requirement,
                                                        User user)
         {
-
             if (context.User?.Claims?.FirstOrDefault(x => x.Type == "sub")?.Value == user.Id.ToString())
             {
                 context.Succeed(requirement);
@@ -22,10 +21,9 @@ namespace Api.Handlers
             {
                 context.Fail();
             }
-
             return Task.CompletedTask;
         }
     }
-
+    
     public class SameUserIDRequirement : IAuthorizationRequirement { }
 }

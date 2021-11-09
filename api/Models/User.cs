@@ -15,6 +15,7 @@ namespace Api.Models
         public int Id { get; set; }
         public string GoogleId { get; set; }
         public string FacebookId { get; set; }
+        public float? Weight { get; set; }
         public List<Run> Runs { get; set; }
     }
 }

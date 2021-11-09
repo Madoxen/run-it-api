@@ -30,6 +30,7 @@ namespace Api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [AllowAnonymous]
     public class AuthController : ControllerBase
     {
         private readonly IHttpClientFactory _clientFactory;
@@ -57,7 +58,6 @@ namespace Api.Controllers
             string authToken = Request.Headers["Authorization"];
             if (authToken.StartsWith("Bearer "))
                 authToken = new string(authToken.Skip(7).ToArray());
-
 
             try
             {

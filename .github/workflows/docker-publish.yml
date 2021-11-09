@@ -9,11 +9,15 @@ on:
   schedule:
     - cron: '39 12 * * *'
   push:
-    branches: [ master ]
+    branches:
+    - master
+    - dev
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
   pull_request:
-    branches: [ master ]
+    branches:
+    - master
+    - dev
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -23,8 +27,23 @@ env:
 
 
 jobs:
-  build:
-
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+  
+  build_image:
+    needs: [test]
     runs-on: ubuntu-latest
     permissions:
       contents: read
