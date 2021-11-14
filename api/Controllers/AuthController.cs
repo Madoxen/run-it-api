@@ -22,7 +22,6 @@ using Microsoft.Extensions.Options;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
-using Api.Repositories;
 using Api.Payloads;
 using System.Runtime.CompilerServices;
 
@@ -34,14 +33,14 @@ namespace Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IHttpClientFactory _clientFactory;
-        private readonly IUserRepository _userRepository;
+        private readonly ApiContext _context;
         private readonly AuthenticationOptions _authOptions;
 
-        public AuthController(IUserRepository userRepository,
+        public AuthController(ApiContext context,
                               IHttpClientFactory clientFactory,
                               IOptions<AuthenticationOptions> authOptions)
         {
-            _userRepository = userRepository;
+            _context = context;
             _clientFactory = clientFactory;
             _authOptions = authOptions.Value;
         }
@@ -73,7 +72,7 @@ namespace Api.Controllers
                 //Create new account
                 //Check if the user already exists in DB
                 var sub = googleJWTPayload.Subject;
-                User user = await _userRepository.FirstOrDefaultAsync(x => x.GoogleId == sub);
+                User user = await _context.Users.FirstOrDefaultAsync(x => x.GoogleId == sub);
                 if (user != null)
                     return CreateJwtAuthPayload(user.Id);
 
@@ -85,7 +84,8 @@ namespace Api.Controllers
                     FacebookId = null,
                 };
 
-                await _userRepository.Add(u);
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
                 // Returns the 'access_token' and the type in lower case
                 return CreateJwtAuthPayload(user.Id);
             }
@@ -137,7 +137,7 @@ namespace Api.Controllers
             //Finally check if the user exists in the database
             //Create new account
             string sub = payload.UserId;
-            User user = await _userRepository.FirstOrDefaultAsync(x => x.FacebookId == sub);
+            User user = await _context.Users.FirstOrDefaultAsync(x => x.FacebookId == sub);
             if (user != null)
                 return CreateJwtAuthPayload(user.Id);
 
@@ -149,8 +149,8 @@ namespace Api.Controllers
                 FacebookId = sub,
             };
 
-            await _userRepository.Add(user);
-
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
             // Returns the 'access_token' and the type in lower case
             return CreateJwtAuthPayload(user.Id);
         }

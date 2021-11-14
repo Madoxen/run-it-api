@@ -1,11 +1,11 @@
 using System.Threading.Tasks;
-using Api.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Api.Models;
 using Api.Handlers;
 using Api.Payloads;
+using System.Linq;
 
 namespace Api.Controllers
 {
@@ -13,12 +13,12 @@ namespace Api.Controllers
     [Route("[controller]")]
     public class UserController : ControllerBase
     {
-        private readonly IUserRepository _userRepository;
+        private readonly ApiContext _context;
         private readonly IAuthorizationService _authorizationService;
 
-        public UserController(IUserRepository userRepository, IAuthorizationService authorizationService)
+        public UserController(ApiContext context, IAuthorizationService authorizationService)
         {
-            _userRepository = userRepository;
+            _context = context;
             _authorizationService = authorizationService;
         }
 
@@ -26,7 +26,7 @@ namespace Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> Get(int id)
         {
-            User result = await _userRepository.Get(id);
+            User result = await _context.Users.FindAsync(id);
             if (result == null)
                 return NotFound();
 
@@ -47,17 +47,18 @@ namespace Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            User result = await _userRepository.Get(id);
-            if (result == null)
-                return NotFound();
+            User target = await _context.Users.FindAsync(id);
+            if (target == null)
+                return NotFound("User not found");
 
             var authorizationResult = await _authorizationService
-                    .AuthorizeAsync(User, result, "CheckUserIDResourceAccess");
+                    .AuthorizeAsync(User, target, "CheckUserIDResourceAccess");
 
 
             if (authorizationResult.Succeeded)
             {
-                await _userRepository.Delete(id);
+                _context.Users.Remove(target);
+                await _context.SaveChangesAsync();
                 return Ok();
             }
             else
@@ -70,19 +71,19 @@ namespace Api.Controllers
         [HttpPut]
         public async Task<IActionResult> Put(UserPayload payload)
         {
-            User result = await _userRepository.Get(payload.Id);
-            if (result == null)
+            User user = await _context.Users.FindAsync(payload.Id);
+            if (user == null)
                 return NotFound();
 
             var authorizationResult = await _authorizationService
-                    .AuthorizeAsync(User, result, "CheckUserIDResourceAccess");
+                    .AuthorizeAsync(User, user, "CheckUserIDResourceAccess");
 
 
             if (authorizationResult.Succeeded)
             {
-                User user = await _userRepository.Get(payload.Id);
                 payload.ApplyToModel(user);
-                await _userRepository.Update(user);
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
                 return Ok();
             }
             else
