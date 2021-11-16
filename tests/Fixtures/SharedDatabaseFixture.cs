@@ -1,11 +1,21 @@
-public class SharedDatabaseFixture : IDisposable
+using System;
+using System.Data.Common;
+using Api.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
+
+namespace Api.Test.Fixtures
+{
+    public class SharedDatabaseFixture : IDisposable
     {
         private static readonly object _lock = new object();
         private static bool _databaseInitialized;
 
         public SharedDatabaseFixture()
         {
-            Connection = new SqlConnection(@"Server=(localdb)\mssqllocaldb;Database=EFTestSample;Trusted_Connection=True");
+            Connection = new Npgsql.NpgsqlConnection(@"Server=test_db;Database=dev;Username=admin;Password=admin");
 
             Seed();
 
@@ -14,9 +24,9 @@ public class SharedDatabaseFixture : IDisposable
 
         public DbConnection Connection { get; }
 
-        public ItemsContext CreateContext(DbTransaction transaction = null)
+        public ApiContext CreateContext(DbTransaction transaction = null)
         {
-            var context = new ItemsContext(new DbContextOptionsBuilder<ItemsContext>().UseSqlServer(Connection).Options);
+            var context = new ApiContext(new DbContextOptionsBuilder<ApiContext>().UseNpgsql(Connection).Options);
 
             if (transaction != null)
             {
@@ -37,24 +47,15 @@ public class SharedDatabaseFixture : IDisposable
                         context.Database.EnsureDeleted();
                         context.Database.EnsureCreated();
 
-                        var one = new Item("ItemOne");
-                        one.AddTag("Tag11");
-                        one.AddTag("Tag12");
-                        one.AddTag("Tag13");
+                        var user = new User()
+                        {
+                            Id = 1,
+                        };
 
-                        var two = new Item("ItemTwo");
-
-                        var three = new Item("ItemThree");
-                        three.AddTag("Tag31");
-                        three.AddTag("Tag31");
-                        three.AddTag("Tag31");
-                        three.AddTag("Tag32");
-                        three.AddTag("Tag32");
-
-                        context.AddRange(one, two, three);
-
+                        context.Users.Add(user);
                         context.SaveChanges();
                     }
+
 
                     _databaseInitialized = true;
                 }
@@ -63,3 +64,4 @@ public class SharedDatabaseFixture : IDisposable
 
         public void Dispose() => Connection.Dispose();
     }
+}

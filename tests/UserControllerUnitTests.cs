@@ -14,15 +14,16 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Api.Test.Mocks;
 using Microsoft.EntityFrameworkCore;
+using Api.Test.Fixtures;
 
 namespace Api.Tests
 {
 
-    public class UserControllerUnitTests
+    public class UserControllerUnitTests : IClassFixture<SharedDatabaseFixture>
     {
-        public UserControllerUnitTests()
+        public UserControllerUnitTests(SharedDatabaseFixture fixture)
         {
-            Seed();
+            DbFixture = fixture;
         }
 
         private enum UserAuthorizationHandlerMode
@@ -31,25 +32,8 @@ namespace Api.Tests
             FAIL = 1,
         }
 
-        protected DbContextOptions<ApiContext> ContextOptions { get; } = Builders.BuildDefaultDbContext();
-
-        private void Seed()
-        {
-            using (var context = new ApiContext(ContextOptions))
-            {
-                context.Database.EnsureDeleted();
-                context.Database.EnsureCreated();
-
-                var user = new User()
-                {
-                    Id = 1,
-                };
-
-                context.Users.Add(user);
-                context.SaveChanges();
-            }
-        }
-
+        public SharedDatabaseFixture DbFixture { get; }
+        
 
         private IAuthorizationService ArrangeAuthService(
             IAuthorizationService authService = null,
@@ -125,7 +109,7 @@ namespace Api.Tests
         [Fact]
         public async void TestGetEndpointWithExistingID()
         {
-            using (ApiContext context = new ApiContext(ContextOptions))
+            using (ApiContext context = DbFixture.CreateContext())
             {
                 //Arrange
                 UserController controller = CreateDefaultTestController(context);
@@ -142,7 +126,7 @@ namespace Api.Tests
         [Fact]
         public async void TestGetEndpointWithNonExistingID()
         {
-            using (ApiContext context = new ApiContext(ContextOptions))
+            using (ApiContext context = DbFixture.CreateContext())
             {
                 //Arrange
                 UserController controller = CreateDefaultTestController(context);
@@ -159,7 +143,7 @@ namespace Api.Tests
         [Fact]
         public async void TestDeleteEndpointWithExistingID()
         {
-            using (ApiContext context = new ApiContext(ContextOptions))
+            using (ApiContext context = DbFixture.CreateContext())
             {
                 //Arrange
                 UserController controller = CreateDefaultTestController(context);
@@ -177,7 +161,7 @@ namespace Api.Tests
         [Fact]
         public async void TestDeleteEndpointWithNonExistingID()
         {
-            using (ApiContext context = new ApiContext(ContextOptions))
+            using (ApiContext context = DbFixture.CreateContext())
             {
                 //Arrange
                 UserController controller = CreateDefaultTestController(context);
@@ -193,7 +177,7 @@ namespace Api.Tests
         [Fact]
         public async void TestUpdateEndpointWithExistingID()
         {
-            using (ApiContext context = new ApiContext(ContextOptions))
+            using (ApiContext context = DbFixture.CreateContext())
             {
                 //Arrange
                 UserController controller = CreateDefaultTestController(context);
@@ -215,7 +199,7 @@ namespace Api.Tests
         [Fact]
         public async void TestUpdateEndpointWithNonExistingID()
         {
-            using (ApiContext context = new ApiContext(ContextOptions))
+            using (ApiContext context = DbFixture.CreateContext())
             {
                 //Arrange
                 UserController controller = CreateDefaultTestController(context);
@@ -237,7 +221,7 @@ namespace Api.Tests
         [Fact]
         public async void TestGetUnauthorized()
         {
-            using (ApiContext context = new ApiContext(ContextOptions))
+            using (ApiContext context = DbFixture.CreateContext())
             {
                 //Arrange
                 UserController controller = CreateDefaultTestController(context);
@@ -254,7 +238,7 @@ namespace Api.Tests
         [Fact]
         public async void TestUpdateUnauthorized()
         {
-            using (ApiContext context = new ApiContext(ContextOptions))
+            using (ApiContext context = DbFixture.CreateContext())
             {
                 //Arrange
                 UserController controller = CreateDefaultTestController(context);
@@ -276,7 +260,7 @@ namespace Api.Tests
         [Fact]
         public async void TestDeleteUnauthorized()
         {
-            using (ApiContext context = new ApiContext(ContextOptions))
+            using (ApiContext context = DbFixture.CreateContext())
             {
                 //Arrange
                 UserController controller = CreateDefaultTestController(context);
