@@ -81,13 +81,11 @@ namespace Api.Controllers
             }
         }
 
-        // [HttpDelete]
-        // [Route("{user_id}/{friend_id}")]
-        // public async Task<IActionResult> Delete(int user_id, int friend_id)
-        // {
+        [HttpDelete]
+        [Route("{user_id}/{friend_id}")]
+        public async Task<IActionResult> Delete(int user_id, int friend_id)
+        {
 
-        // }
-
-
+        }
     }
 }
