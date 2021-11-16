@@ -3,6 +3,7 @@
 
 .env
 appsettings.json
+data/
 
 # Visual Studio Code configuration files
 .vscode/

@@ -1,0 +1,28 @@
+#development environment
+version: "3.1"
+services:
+  test_runner:
+    build:
+      context: ./
+      dockerfile: Dockerfile.RunTests
+    volumes:
+      - ./:/app
+    networks:
+     - test_net
+    depends_on:
+     - test_db
+    env_file:
+      - ../.env
+  test_db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: dev
+    volumes:
+      - ./data/:/var/lib/postgresql/data/
+    networks:
+      - test_net
+networks:
+  test_net:
