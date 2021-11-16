@@ -63,7 +63,7 @@ namespace Api.Controllers
 
             if (authorizationResult.Succeeded)
             {
-                _userRepository.DeleteFriend(user, friend);
+                _userRepository.DeleteFriend(id, friend_id);
                 return Ok();
             }
             else

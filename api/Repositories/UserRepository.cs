@@ -38,6 +38,11 @@ namespace Api.Repositories
             var friend = await context.Users
             .Include(u => u.Friends).FirstOrDefaultAsync(x => x.Id == friendId);
 
+            if (user == null)
+                return;
+            if (friend == null)
+                return;
+
             user.Friends.Add(friend);
             friend.Friends.Add(user);
 
@@ -51,6 +56,11 @@ namespace Api.Repositories
 
             var friend = await context.Users
             .Include(u => u.Friends).FirstOrDefaultAsync(x => x.Id == friendId);
+
+            if (user == null)
+                return;
+            if (friend == null)
+                return;
 
             user.Friends.Remove(friend);
             friend.Friends.Remove(user);

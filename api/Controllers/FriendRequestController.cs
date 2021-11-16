@@ -70,7 +70,7 @@ namespace Api.Controllers
             {
                 if (user.FriendRequests.Exists(x => x.Id == friend_id))
                 {
-                    _userRepository.AddFriend(user, friend);
+                    _userRepository.AddFriend(user_id, friend_id);
                 }
                 friend.FriendRequests.Add(user);
                 return Ok();
@@ -81,11 +81,11 @@ namespace Api.Controllers
             }
         }
 
-        [HttpDelete]
-        [Route("{user_id}/{friend_id}")]
-        public async Task<IActionResult> Delete(int user_id, int friend_id)
-        {
+        // [HttpDelete]
+        // [Route("{user_id}/{friend_id}")]
+        // public async Task<IActionResult> Delete(int user_id, int friend_id)
+        // {
 
-        }
+        // }
     }
 }

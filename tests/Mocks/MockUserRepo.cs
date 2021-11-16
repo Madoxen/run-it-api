@@ -22,6 +22,11 @@ namespace Api.Tests.Mocks
             friend.Friends.Add(user);
         }
 
+        public void AddFriend(int userId, int friendId)
+        {
+            
+        }
+
         public async Task Delete(int id)
         {
             await Task.Run(() => store.Remove(
@@ -33,6 +38,11 @@ namespace Api.Tests.Mocks
         {
             user.Friends.Remove(friend);
             friend.Friends.Remove(user);
+        }
+
+        public void DeleteFriend(int userId, int friendId)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<User> FirstOrDefaultAsync(Expression<Func<User, bool>> predicate)
