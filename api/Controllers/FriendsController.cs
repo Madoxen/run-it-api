@@ -50,7 +50,7 @@ namespace Api.Controllers
             }
         }
 
-        [HttpDelete("{id}/{friend_id}")]
+        [HttpDelete("{user_id}/{friend_id}")]
         public async Task<IActionResult> Delete(int user_id, int friend_id)
         {
             User user = await _context.Users
