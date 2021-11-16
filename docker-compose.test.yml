@@ -11,8 +11,6 @@ services:
      - test_net
     depends_on:
      - test_db
-    env_file:
-      - ../.env
   test_db:
     image: postgres
     restart: always
