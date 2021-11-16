@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using Api.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -15,12 +15,12 @@ namespace Api.Controllers
     [Route("[controller]")]
     public class FriendRequestController : ControllerBase
     {
-        private readonly IUserRepository _userRepository;
         private readonly IAuthorizationService _authorizationService;
+        private readonly ApiContext _context;
 
-        public FriendRequestController(IUserRepository userRepository, IAuthorizationService authorizationService)
+        public FriendRequestController(ApiContext context, IAuthorizationService authorizationService)
         {
-            _userRepository = userRepository;
+            _context = context;
             _authorizationService = authorizationService;
         }
 
@@ -29,19 +29,22 @@ namespace Api.Controllers
         [Route("{user_id}")]
         public async Task<ActionResult<List<FriendPayload>>> Get(int user_id)
         {
-            User result = await _userRepository.Get(user_id);
-            if (result == null)
+            User user = await _context.Users
+            .Include(x => x.FriendRequests)
+            .FirstOrDefaultAsync(x => x.Id == user_id);
+
+            if (user == null)
                 return NotFound("User not found");
 
             var authorizationResult = await _authorizationService
-                    .AuthorizeAsync(User, result, "CheckUserIDResourceAccess");
+                    .AuthorizeAsync(User, user, "CheckUserIDResourceAccess");
 
 
             if (authorizationResult.Succeeded)
             {
-                if (result.FriendRequests == null)
+                if (user.FriendRequests == null)
                     return new List<FriendPayload>();
-                return result.FriendRequests.Select(x => new FriendPayload(x)).ToList();
+                return user.FriendRequests?.Select(x => new FriendPayload(x)).ToList();
             }
             else
             {
@@ -53,14 +56,20 @@ namespace Api.Controllers
         [Route("{user_id}/{friend_id}")]
         public async Task<IActionResult> Post(int user_id, int friend_id)
         {
-            User user = await _userRepository.Get(user_id);
-            User friend = await _userRepository.Get(friend_id);
+            User user = await _context.Users
+           .Include(x => x.FriendRequests)
+           .Include(x => x.Friends)
+           .FirstOrDefaultAsync(x => x.Id == user_id);
+
+            User friend = await _context.Users
+            .Include(x => x.FriendRequests)
+            .Include(x => x.Friends)
+            .FirstOrDefaultAsync(x => x.Id == friend_id);
+
             if (user == null)
                 return NotFound("User not found");
             if (friend == null)
                 return NotFound("Friend not found");
-
-
 
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, user, "CheckUserIDResourceAccess");
@@ -70,9 +79,12 @@ namespace Api.Controllers
             {
                 if (user.FriendRequests.Exists(x => x.Id == friend_id))
                 {
-                    _userRepository.AddFriend(user_id, friend_id);
+                    user.Friends.Add(friend);
+                    friend.Friends.Add(user);
                 }
+
                 friend.FriendRequests.Add(user);
+                await _context.SaveChangesAsync();
                 return Ok();
             }
             else
@@ -81,11 +93,37 @@ namespace Api.Controllers
             }
         }
 
-        // [HttpDelete]
-        // [Route("{user_id}/{friend_id}")]
-        // public async Task<IActionResult> Delete(int user_id, int friend_id)
-        // {
+        [HttpDelete]
+        [Route("{user_id}/{friend_id}")]
+        public async Task<IActionResult> Delete(int user_id, int friend_id)
+        {
+            User user = await _context.Users
+            .Include(x => x.FriendRequests)
+            .FirstOrDefaultAsync(x => x.Id == user_id);
 
-        // }
+            User friend = await _context.Users
+            .Include(x => x.FriendRequests)
+            .FirstOrDefaultAsync(x => x.Id == friend_id);
+
+            if (user == null)
+                return NotFound("User not found");
+            if (friend == null)
+                return NotFound("Friend not found");
+
+            var authorizationResult = await _authorizationService
+                    .AuthorizeAsync(User, user, "CheckUserIDResourceAccess");
+
+
+            if (authorizationResult.Succeeded)
+            {
+                user.FriendRequests.Remove(friend);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
     }
 }

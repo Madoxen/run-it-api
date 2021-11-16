@@ -1,12 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using Api.Models;
-using Api.Repositories;
 using Xunit;
 using Api.Controllers;
-using Api.Tests.Mocks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,31 +15,62 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Api.Test.Mocks;
 using Api.Payloads;
+using System;
+using System.Linq;
 
 namespace Api.Tests
 {
 
-    public class FriendControllerUnitTests
+    public class FriendControllerUnitTests : IDisposable
     {
+        public FriendControllerUnitTests()
+        {
+            var options = new DbContextOptionsBuilder<ApiContext>()
+              .UseNpgsql($"Server=test_db;Database={Guid.NewGuid().ToString()};Username=admin;Password=admin")
+              .Options;
+
+            ApiContext = new ApiContext(options);
+
+            //insert the data that you want to be seeded for each test method:
+            Seed();
+        }
+
+        private ApiContext ApiContext { get; set; }
         private enum UserAuthorizationHandlerMode
         {
             SUCC = 0,
             FAIL = 1,
         }
 
-        private async Task<FriendsController> Arrange(
-            IUserRepository repo = null,
+        private void Seed()
+        {
+            ApiContext.Database.EnsureCreated();
+
+            var user = new User()
+            {
+                Id = 1,
+                Weight = 1,
+            };
+
+            var friend = new User()
+            {
+                Id = 2,
+                Weight = 1,
+            };
+
+            ApiContext.Users.Add(user);
+            ApiContext.Users.Add(friend);
+            user.Friends = new List<User>();
+            friend.Friends = new List<User>();
+            user.Friends.Add(friend);
+            friend.Friends.Add(user);
+            ApiContext.SaveChanges();
+        }
+
+        private IAuthorizationService ArrangeAuthService(
             IAuthorizationService authService = null,
-            List<Claim> claims = null,
             UserAuthorizationHandlerMode handlerType = UserAuthorizationHandlerMode.SUCC)
         {
-            //Arrange user repository and add an user
-            if (repo == null)
-            {
-                repo = new MockUserRepo();
-                await repo.Add(new User() { Id = 1 });
-            }
-
 
             //Arrange Authentication context
             IOptions<AuthenticationOptions> options = Options.Create(new AuthenticationOptions()
@@ -56,6 +84,29 @@ namespace Api.Tests
                 }
             });
 
+            if (authService == null)
+            {
+                //Create authorization service
+                authService = Builders.BuildAuthorizationService(services =>
+                {
+                    if (handlerType == UserAuthorizationHandlerMode.SUCC)
+                        services.AddScoped<IAuthorizationHandler, MockUserAuthorizationHandlerSuccess>();
+
+                    if (handlerType == UserAuthorizationHandlerMode.FAIL)
+                        services.AddScoped<IAuthorizationHandler, MockUserAuthorizationHandlerFail>();
+
+                    services.AddAuthorization(options =>
+                    {
+                        options.AddPolicy("CheckUserIDResourceAccess", policy => policy.Requirements.Add(new SameUserIDRequirement()));
+                    });
+                });
+            }
+
+            return authService;
+        }
+
+        private ControllerContext ArrangeControllerContext(List<Claim> claims = null)
+        {
             if (claims == null)
             {
                 claims = new List<Claim>()
@@ -76,29 +127,13 @@ namespace Api.Tests
                 }
             };
 
-            if (authService == null)
-            {
-                //Create authorization service
-                authService = Builders.BuildAuthorizationService(services =>
-                {
-                    if (handlerType == UserAuthorizationHandlerMode.SUCC)
-                        services.AddScoped<IAuthorizationHandler, MockUserAuthorizationHandlerSuccess>();
+            return context;
+        }
 
-                    if (handlerType == UserAuthorizationHandlerMode.FAIL)
-                        services.AddScoped<IAuthorizationHandler, MockUserAuthorizationHandlerFail>();
-
-                    services.AddAuthorization(options =>
-                    {
-                        options.AddPolicy("CheckUserIDResourceAccess", policy => policy.Requirements.Add(new SameUserIDRequirement()));
-                    });
-                });
-            }
-
-
-            //Arrange controller and supply it with context
-            FriendsController controller = new FriendsController(repo, authService);
-            controller.ControllerContext = context;
-
+        private FriendsController CreateDefaultTestController()
+        {
+            FriendsController controller = new FriendsController(ApiContext, ArrangeAuthService());
+            controller.ControllerContext = ArrangeControllerContext();
             return controller;
         }
 
@@ -107,7 +142,7 @@ namespace Api.Tests
         public async void TestGetEndpointWithExistingID()
         {
             //Arrange
-            FriendsController controller = await Arrange();
+            FriendsController controller = CreateDefaultTestController();
 
             //Act
             ActionResult<List<FriendPayload>> result = await controller.Get(1);
@@ -121,13 +156,13 @@ namespace Api.Tests
         public async void TestGetEndpointWithNonExistingID()
         {
             //Arrange
-            FriendsController controller = await Arrange();
+            FriendsController controller = CreateDefaultTestController();
 
             //Act
-            ActionResult<List<FriendPayload>> result = await controller.Get(2);
+            ActionResult<List<FriendPayload>> result = await controller.Get(3);
 
             //Assert
-            Assert.IsType<NotFoundResult>(result.Result);
+            Assert.IsType<NotFoundObjectResult>(result.Result);
             Assert.Null(result.Value);
         }
 
@@ -136,21 +171,14 @@ namespace Api.Tests
         public async void TestDeleteEndpointWithExistingID()
         {
             //Arrange
-            var repo = new MockUserRepo();
-            var user = new User() { Id = 1 };
-            var friend = new User() { Id = 2 };
-            user.Friends = new List<User>() { friend };
-            friend.Friends = new List<User>() { user };
-            await repo.Add(user);
-            await repo.Add(friend);
-            FriendsController controller = await Arrange(repo);
+            FriendsController controller = CreateDefaultTestController();
 
             //Act
             var result = await controller.Delete(1, 2);
-            var repo_result = await repo.Get(1);
+            var context_result = ApiContext.Users.Include(x => x.Friends).First(x => x.Id == 1);
 
             //Assert
-            Assert.Empty(repo_result.Friends);
+            Assert.Empty(context_result.Friends);
             Assert.IsType<OkResult>(result);
         }
 
@@ -159,14 +187,7 @@ namespace Api.Tests
         public async void TestDeleteEndpointWithNonExistingID()
         {
             //Arrange
-            var repo = new MockUserRepo();
-            var user = new User() { Id = 1 };
-            var friend = new User() { Id = 2 };
-            user.Friends = new List<User>() { friend };
-            friend.Friends = new List<User>() { user };
-            await repo.Add(user);
-            await repo.Add(friend);
-            FriendsController controller = await Arrange(repo);
+            FriendsController controller = CreateDefaultTestController();
 
 
             //Act
@@ -181,7 +202,8 @@ namespace Api.Tests
         public async void TestGetUnauthorized()
         {
             //Arrange
-            FriendsController controller = await Arrange(handlerType: UserAuthorizationHandlerMode.FAIL);
+            FriendsController controller = new FriendsController(ApiContext, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
+            controller.ControllerContext = ArrangeControllerContext();
             //Act
             var result = await controller.Get(1);
             //Assert
@@ -194,22 +216,21 @@ namespace Api.Tests
         public async void TestDeleteUnauthorized()
         {
             //Arrange
-            var repo = new MockUserRepo();
-            var user = new User() { Id = 1 };
-            var friend = new User() { Id = 2 };
-            user.Friends = new List<User>() { friend };
-            friend.Friends = new List<User>() { user };
-            await repo.Add(user);
-            await repo.Add(friend);
-            await repo.Add(new User() { Id = 1, Weight = 1 });
-            FriendsController controller = await Arrange(repo: repo, handlerType: UserAuthorizationHandlerMode.FAIL);
+            FriendsController controller = new FriendsController(ApiContext, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
+            controller.ControllerContext = ArrangeControllerContext();
             //Act
             var result = await controller.Delete(1, 2);
+            var context_result = await ApiContext.Users.Include(x => x.Friends).FirstAsync(x => x.Id == 1);
             //Assert
             Assert.IsType<UnauthorizedResult>(result);
-            Assert.NotNull(await repo.Get(1));
+
+            Assert.Equal(1, context_result.Friends.Count());
         }
 
+        public void Dispose()
+        {
+            ApiContext.Dispose();
+        }
     }
 }
 

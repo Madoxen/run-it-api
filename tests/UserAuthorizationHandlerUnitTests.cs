@@ -1,20 +1,7 @@
-using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Linq;
 using Api.Models;
-using Api.Repositories;
 using Xunit;
-using Api.Controllers;
-using Api.Tests.Mocks;
-using Microsoft.AspNetCore.Mvc;
-using Api.Configuration.Options;
-using Api.Payloads;
-using Microsoft.Extensions.Options;
 using System.Security.Claims;
-using System.Threading;
-using System.Runtime.CompilerServices;
-using Microsoft.AspNetCore.Http;
 using Api.Handlers;
 using Microsoft.AspNetCore.Authorization;
 
@@ -27,6 +14,7 @@ namespace Api.Tests
             SUCC,
             FAIL
         }
+        
         private AuthorizationHandlerContext ArrangeAuthContext(ContextMode mode = ContextMode.SUCC)
         {
             User resource = new User()
@@ -57,6 +45,7 @@ namespace Api.Tests
 
             //Act
             handler.HandleAsync(authContext);
+
             //Assert
             Assert.True(authContext.HasSucceeded);
             Assert.False(authContext.HasFailed);
@@ -71,6 +60,7 @@ namespace Api.Tests
 
             //Act
             handler.HandleAsync(authContext);
+
             //Assert
             Assert.True(authContext.HasFailed);
             Assert.False(authContext.HasSucceeded);
