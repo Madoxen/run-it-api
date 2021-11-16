@@ -14,13 +14,11 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Api.Test.Mocks;
 using Microsoft.EntityFrameworkCore;
-using Api.Test.Fixtures;
 using System;
 
 
 namespace Api.Tests
 {
-
     public class UserControllerUnitTests : IDisposable
     {
         public UserControllerUnitTests()
@@ -33,7 +31,6 @@ namespace Api.Tests
 
             //insert the data that you want to be seeded for each test method:
             Seed();
-            ApiContext.SaveChanges();
         }
 
         private ApiContext ApiContext { get; set; }
@@ -94,7 +91,6 @@ namespace Api.Tests
                 });
             }
 
-
             return authService;
         }
 
@@ -142,7 +138,7 @@ namespace Api.Tests
 
             //Assert
             Assert.IsType<User>(result.Value);
-
+            
         }
 
 

@@ -1,91 +1,102 @@
-// using System.Collections.Generic;
-// using Api.Models;
-// using Xunit;
-// using Api.Controllers;
-// using Microsoft.AspNetCore.Mvc;
-// using Api.Configuration.Options;
-// using Api.Payloads;
-// using Microsoft.Extensions.Options;
-// using System.Security.Claims;
-// using Microsoft.AspNetCore.Http;
-// using Api.Tests.Utils;
-// using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using Api.Models;
+using Xunit;
+using Api.Controllers;
+using Microsoft.AspNetCore.Mvc;
+using Api.Configuration.Options;
+using Api.Payloads;
+using Microsoft.Extensions.Options;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using Api.Tests.Utils;
+using Microsoft.EntityFrameworkCore;
+using System;
 
-// namespace Api.Testss
-// {
-//     public class AuthControllerUnitTests
-//     {
-//         public AuthControllerUnitTests()
-//         {
-//             Seed();
-//         }
+namespace Api.Testss
+{
+    public class AuthControllerUnitTests : IDisposable
+    {
+        public AuthControllerUnitTests()
+        {
+            var options = new DbContextOptionsBuilder<ApiContext>()
+              .UseNpgsql($"Server=test_db;Database={Guid.NewGuid().ToString()};Username=admin;Password=admin")
+              .Options;
 
-//         private enum UserAuthorizationHandlerMode
-//         {
-//             SUCC = 0,
-//             FAIL = 1,
-//         }
+            ApiContext = new ApiContext(options);
 
-//         protected DbContextOptions<ApiContext> ContextOptions { get; } = Builders.BuildDefaultDbContext();
+            //insert the data that you want to be seeded for each test method:
+            Seed();
+        }
 
-//         private void Seed()
-//         {
-//             using (var context = new ApiContext(ContextOptions))
-//             {
-//                 context.Database.EnsureDeleted();
-//                 context.Database.EnsureCreated();
+        private ApiContext ApiContext { get; set; }
 
-//                 var user = new User()
-//                 {
-//                     Id = 1,
-//                 };
+        private enum UserAuthorizationHandlerMode
+        {
+            SUCC = 0,
+            FAIL = 1,
+        }
 
-//                 context.Users.Add(user);
-//                 context.SaveChanges();
-//             }
-//         }
+        private void Seed()
+        {
+            ApiContext.Database.EnsureDeleted();
+            ApiContext.Database.EnsureCreated();
 
-//         [Fact]
-//         public async void TestGetRefreshTokenEndpointValidToken()
-//         {
-//             //Arrange
-//             using (ApiContext context = new ApiContext(ContextOptions))
-//             {
-//                 IOptions<AuthenticationOptions> options = Options.Create(new AuthenticationOptions()
-//                 {
-//                     JWT = new JWTOptions()
-//                     {
-//                         Audience = "runit.co",
-//                         Issuer = "runit.co",
-//                         ExpiryMinutes = 20,
-//                         Key = "aaabbbcccdddeeefffggghhhiiijjjkkk"
-//                     }
-//                 });
+            var user = new User()
+            {
+                Id = 1,
+            };
 
-//                 var claims = new List<Claim>()
-//             {
-//                 new Claim("sub", "1"),
-//             };
-//                 var identity = new ClaimsIdentity(claims);
-//                 var user = new ClaimsPrincipal(identity);
-//                 var controllerContext = new ControllerContext
-//                 {
-//                     HttpContext = new DefaultHttpContext
-//                     {
-//                         User = user,
-//                     }
-//                 };
+            ApiContext.Users.Add(user);
+            ApiContext.SaveChanges();
 
-//                 AuthController controller = new AuthController(context, null, options);
-//                 controller.ControllerContext = controllerContext;
-                
-//                 //Act
-//                 ActionResult<JWTAuthPayload> result = await controller.GetRefereshToken();
+        }
 
-//                 //Assert
-//                 Assert.NotNull(result);
-//                 Assert.NotNull(result.Value);
-//             }
-//         }
-//     }
-// }
+        [Fact]
+        public async void TestGetRefreshTokenEndpointValidToken()
+        {
+            //Arrange
+
+            IOptions<AuthenticationOptions> options = Options.Create(new AuthenticationOptions()
+            {
+                JWT = new JWTOptions()
+                {
+                    Audience = "runit.co",
+                    Issuer = "runit.co",
+                    ExpiryMinutes = 20,
+                    Key = "aaabbbcccdddeeefffggghhhiiijjjkkk"
+                }
+            });
+
+            var claims = new List<Claim>()
+            {
+                new Claim("sub", "1"),
+            };
+            var identity = new ClaimsIdentity(claims);
+            var user = new ClaimsPrincipal(identity);
+            var controllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = user,
+                }
+            };
+
+            AuthController controller = new AuthController(ApiContext, null, options);
+            controller.ControllerContext = controllerContext;
+
+            //Act
+            ActionResult<JWTAuthPayload> result = await controller.GetRefereshToken();
+
+            //Assert
+            Assert.NotNull(result);
+            Assert.NotNull(result.Value);
+
+        }
+
+        public void Dispose()
+        {
+            ApiContext.Dispose();
+        }
+
+    }
+}
