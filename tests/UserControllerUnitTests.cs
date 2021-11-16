@@ -15,16 +15,28 @@ using Microsoft.AspNetCore.Http;
 using Api.Test.Mocks;
 using Microsoft.EntityFrameworkCore;
 using Api.Test.Fixtures;
+using System;
+
 
 namespace Api.Tests
 {
 
-    public class UserControllerUnitTests : IClassFixture<SharedDatabaseFixture>
+    public class UserControllerUnitTests : IDisposable
     {
-        public UserControllerUnitTests(SharedDatabaseFixture fixture)
+        public UserControllerUnitTests()
         {
-            DbFixture = fixture;
+            var options = new DbContextOptionsBuilder<ApiContext>()
+              .UseNpgsql($"Server=test_db;Database={Guid.NewGuid().ToString()};Username=admin;Password=admin")
+              .Options;
+
+            ApiContext = new ApiContext(options);
+
+            //insert the data that you want to be seeded for each test method:
+            Seed();
+            ApiContext.SaveChanges();
         }
+
+        private ApiContext ApiContext { get; set; }
 
         private enum UserAuthorizationHandlerMode
         {
@@ -32,8 +44,20 @@ namespace Api.Tests
             FAIL = 1,
         }
 
-        public SharedDatabaseFixture DbFixture { get; }
-        
+        private void Seed()
+        {
+            ApiContext.Database.EnsureCreated();
+
+            var user = new User()
+            {
+                Id = 1,
+                Weight = 1,
+            };
+
+            ApiContext.Users.Add(user);
+            ApiContext.SaveChanges();
+        }
+
 
         private IAuthorizationService ArrangeAuthService(
             IAuthorizationService authService = null,
@@ -99,9 +123,9 @@ namespace Api.Tests
             return context;
         }
 
-        private UserController CreateDefaultTestController(ApiContext context)
+        private UserController CreateDefaultTestController(ApiContext context, UserAuthorizationHandlerMode authMode = UserAuthorizationHandlerMode.SUCC)
         {
-            UserController controller = new UserController(context, ArrangeAuthService());
+            UserController controller = new UserController(context, ArrangeAuthService(handlerType: authMode));
             controller.ControllerContext = ArrangeControllerContext();
             return controller;
         }
@@ -109,169 +133,163 @@ namespace Api.Tests
         [Fact]
         public async void TestGetEndpointWithExistingID()
         {
-            using (ApiContext context = DbFixture.CreateContext())
-            {
-                //Arrange
-                UserController controller = CreateDefaultTestController(context);
 
-                //Act
-                ActionResult<User> result = await controller.Get(1);
+            //Arrange
+            UserController controller = CreateDefaultTestController(ApiContext);
 
-                //Assert
-                Assert.IsType<User>(result.Value);
-            }
+            //Act
+            ActionResult<User> result = await controller.Get(1);
+
+            //Assert
+            Assert.IsType<User>(result.Value);
+
         }
 
 
         [Fact]
         public async void TestGetEndpointWithNonExistingID()
         {
-            using (ApiContext context = DbFixture.CreateContext())
-            {
-                //Arrange
-                UserController controller = CreateDefaultTestController(context);
 
-                //Act
-                ActionResult<User> result = await controller.Get(2);
+            //Arrange
+            UserController controller = CreateDefaultTestController(ApiContext);
 
-                //Assert
-                Assert.IsType<NotFoundResult>(result.Result);
-                Assert.Null(result.Value);
-            }
+            //Act
+            ActionResult<User> result = await controller.Get(2);
+
+            //Assert
+            Assert.IsType<NotFoundResult>(result.Result);
+            Assert.Null(result.Value);
+
         }
 
         [Fact]
         public async void TestDeleteEndpointWithExistingID()
         {
-            using (ApiContext context = DbFixture.CreateContext())
-            {
-                //Arrange
-                UserController controller = CreateDefaultTestController(context);
 
-                //Act
-                var result = await controller.Delete(1);
+            //Arrange
+            UserController controller = CreateDefaultTestController(ApiContext);
 
-                //Assert
-                Assert.Null(context.Users.FindAsync(1));
-                Assert.IsType<OkResult>(result);
-            }
+            //Act
+            var result = await controller.Delete(1);
+
+            //Assert
+            Assert.Null(await ApiContext.Users.FindAsync(1));
+            Assert.IsType<OkResult>(result);
+
         }
 
 
         [Fact]
         public async void TestDeleteEndpointWithNonExistingID()
         {
-            using (ApiContext context = DbFixture.CreateContext())
-            {
-                //Arrange
-                UserController controller = CreateDefaultTestController(context);
 
-                //Act
-                var result = await controller.Delete(2);
+            //Arrange
+            UserController controller = CreateDefaultTestController(ApiContext);
 
-                //Assert
-                Assert.IsType<NotFoundResult>(result);
-            }
+            //Act
+            var result = await controller.Delete(2);
+
+            //Assert
+            Assert.IsType<NotFoundObjectResult>(result);
+
         }
 
         [Fact]
         public async void TestUpdateEndpointWithExistingID()
         {
-            using (ApiContext context = DbFixture.CreateContext())
+
+            //Arrange
+            UserController controller = CreateDefaultTestController(ApiContext);
+
+            //Act
+            await controller.Put(new Payloads.UserPayload()
             {
-                //Arrange
-                UserController controller = CreateDefaultTestController(context);
+                Id = 1,
+                Weight = 10
+            });
 
-                //Act
-                await controller.Put(new Payloads.UserPayload()
-                {
-                    Id = 1,
-                    Weight = 10
-                });
+            //Assert
+            var result = await ApiContext.Users.FindAsync(1);
+            Assert.Equal(10, result.Weight);
 
-                //Assert
-                var result = await context.Users.FindAsync(1);
-                Assert.Equal(10, result.Weight);
-            }
         }
 
 
         [Fact]
         public async void TestUpdateEndpointWithNonExistingID()
         {
-            using (ApiContext context = DbFixture.CreateContext())
+
+            //Arrange
+            UserController controller = CreateDefaultTestController(ApiContext);
+
+            //Act
+            var result = await controller.Put(new Payloads.UserPayload()
             {
-                //Arrange
-                UserController controller = CreateDefaultTestController(context);
+                Id = 2,
+                Weight = 10
+            });
 
-                //Act
-                var result = await controller.Put(new Payloads.UserPayload()
-                {
-                    Id = 2,
-                    Weight = 10
-                });
-
-                //Assert
-                var context_result = await context.Users.FindAsync(1);
-                Assert.IsType<NotFoundResult>(result);
-                Assert.Equal(1, context_result.Weight);
-            }
+            //Assert
+            var contextResult = await ApiContext.Users.FindAsync(1);
+            Assert.IsType<NotFoundResult>(result);
+            Assert.Equal(1, contextResult.Weight);
         }
 
         [Fact]
         public async void TestGetUnauthorized()
         {
-            using (ApiContext context = DbFixture.CreateContext())
-            {
-                //Arrange
-                UserController controller = CreateDefaultTestController(context);
 
-                //Act
-                var result = await controller.Get(1);
+            //Arrange
+            UserController controller = CreateDefaultTestController(ApiContext, UserAuthorizationHandlerMode.FAIL);
 
-                //Assert
-                Assert.IsType<UnauthorizedResult>(result.Result);
-                Assert.Null(result.Value);
-            }
+            //Act
+            var result = await controller.Get(1);
+
+            //Assert
+            Assert.IsType<UnauthorizedResult>(result.Result);
+            Assert.Null(result.Value);
+
         }
 
         [Fact]
         public async void TestUpdateUnauthorized()
         {
-            using (ApiContext context = DbFixture.CreateContext())
+
+            //Arrange
+            UserController controller = CreateDefaultTestController(ApiContext, UserAuthorizationHandlerMode.FAIL);
+
+            //Act
+            var result = await controller.Put(new Payloads.UserPayload()
             {
-                //Arrange
-                UserController controller = CreateDefaultTestController(context);
+                Id = 1,
+                Weight = 10
+            });
 
-                //Act
-                var result = await controller.Put(new Payloads.UserPayload()
-                {
-                    Id = 1,
-                    Weight = 10
-                });
+            //Assert
+            var contextResult = await ApiContext.Users.FindAsync(1);
+            Assert.IsType<UnauthorizedResult>(result);
+            Assert.Equal(1, contextResult.Weight);
 
-                //Assert
-                var context_result = await context.Users.FindAsync(1);
-                Assert.IsType<UnauthorizedResult>(result);
-                Assert.Equal(1, context_result.Weight);
-            }
         }
 
         [Fact]
         public async void TestDeleteUnauthorized()
         {
-            using (ApiContext context = DbFixture.CreateContext())
-            {
-                //Arrange
-                UserController controller = CreateDefaultTestController(context);
-                //Act
-                var result = await controller.Delete(1);
-                //Assert
-                var context_result = await context.Users.FindAsync(1);
-                Assert.IsType<UnauthorizedResult>(result);
-                Assert.NotNull(context_result);
-            }
+
+            //Arrange
+            UserController controller = CreateDefaultTestController(ApiContext, UserAuthorizationHandlerMode.FAIL);
+            //Act
+            var result = await controller.Delete(1);
+            //Assert
+            var contextResult = await ApiContext.Users.FindAsync(1);
+            Assert.IsType<UnauthorizedResult>(result);
+            Assert.NotNull(contextResult);
+
         }
 
+        public void Dispose()
+        {
+            ApiContext.Dispose();
+        }
     }
 }
