@@ -17,5 +17,7 @@ namespace Api.Models
         public string FacebookId { get; set; }
         public float? Weight { get; set; }
         public List<Run> Runs { get; set; }
+        public List<User> Friends { get; set; }
+        public List<User> FriendRequests { get; set; }
     }
 }
