@@ -78,7 +78,7 @@ namespace Api.Controllers
 
                 //if user does not exists
                 //create an account
-                User u = new User()
+                user = new User()
                 {
                     GoogleId = sub,
                     FacebookId = null,
