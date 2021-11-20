@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:5.0
 
 WORKDIR /app
 
-# copy csproj and restore as distinct layers
+#copy everything
 COPY . .
 RUN dotnet restore
 
