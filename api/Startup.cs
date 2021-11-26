@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Api.Configuration.Options;
 using Api.Handlers;
+using Api.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -79,6 +80,9 @@ namespace Api
             });
 
             services.AddSingleton<IAuthorizationHandler, UserAuthorizationHandler>();
+            services.AddSingleton<IUserService, UserService>();
+            services.AddSingleton<IFriendService, FriendService>();
+            services.AddSingleton<IFriendRequestService, FriendRequestService>();
 
             services.AddHttpClient();
 

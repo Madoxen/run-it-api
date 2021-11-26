@@ -6,6 +6,9 @@ using Api.Models;
 using Api.Handlers;
 using Api.Payloads;
 using System.Linq;
+using Api.Services;
+using Api.Utils;
+using System;
 
 namespace Api.Controllers
 {
@@ -13,12 +16,12 @@ namespace Api.Controllers
     [Route("[controller]")]
     public class UserController : ControllerBase
     {
-        private readonly ApiContext _context;
+        private readonly IUserService _userService;
         private readonly IAuthorizationService _authorizationService;
 
-        public UserController(ApiContext context, IAuthorizationService authorizationService)
+        public UserController(IUserService userService, IAuthorizationService authorizationService)
         {
-            _context = context;
+            _userService = userService;
             _authorizationService = authorizationService;
         }
 
@@ -26,17 +29,17 @@ namespace Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> Get(int id)
         {
-            User result = await _context.Users.FindAsync(id);
-            if (result == null)
+            User user = await _userService.GetUserById(id);
+            if (user == null)
                 return NotFound();
 
             var authorizationResult = await _authorizationService
-                    .AuthorizeAsync(User, result, "CheckUserIDResourceAccess");
+                    .AuthorizeAsync(User, id, "CheckUserIDResourceAccess");
 
 
             if (authorizationResult.Succeeded)
             {
-                return result;
+                return user;
             }
             else
             {
@@ -45,21 +48,16 @@ namespace Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
-            User target = await _context.Users.FindAsync(id);
-            if (target == null)
-                return NotFound("User not found");
 
             var authorizationResult = await _authorizationService
-                    .AuthorizeAsync(User, target, "CheckUserIDResourceAccess");
-
+                    .AuthorizeAsync(User, id, "CheckUserIDResourceAccess");
 
             if (authorizationResult.Succeeded)
             {
-                _context.Users.Remove(target);
-                await _context.SaveChangesAsync();
-                return Ok();
+                var result = await _userService.RemoveUserById(id);
+                return result;
             }
             else
             {
@@ -69,22 +67,18 @@ namespace Api.Controllers
 
 
         [HttpPut]
-        public async Task<IActionResult> Put(UserPayload payload)
+        public async Task<ActionResult> Put(UserPayload payload)
         {
-            User user = await _context.Users.FindAsync(payload.Id);
-            if (user == null)
-                return NotFound();
 
             var authorizationResult = await _authorizationService
-                    .AuthorizeAsync(User, user, "CheckUserIDResourceAccess");
+                    .AuthorizeAsync(User, payload.Id, "CheckUserIDResourceAccess");
 
 
             if (authorizationResult.Succeeded)
             {
-                payload.ApplyToModel(user);
-                _context.Users.Update(user);
-                await _context.SaveChangesAsync();
-                return Ok();
+                User user = payload.CreateModel();
+                var result = await _userService.UpdateUser(user);
+                return result;
             }
             else
             {

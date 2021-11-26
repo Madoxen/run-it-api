@@ -11,24 +11,27 @@ using Microsoft.AspNetCore.Http;
 using Api.Tests.Utils;
 using Microsoft.EntityFrameworkCore;
 using System;
+using Api.Services;
+using Api.Tests.Mocks;
 
 namespace Api.Testss
 {
-    public class AuthControllerUnitTests : IDisposable
+    public class AuthControllerUnitTests
     {
         public AuthControllerUnitTests()
         {
-            var options = new DbContextOptionsBuilder<ApiContext>()
-              .UseNpgsql($"Server=test_db;Database={Guid.NewGuid().ToString()};Username=admin;Password=admin")
-              .Options;
-
-            ApiContext = new ApiContext(options);
-
-            //insert the data that you want to be seeded for each test method:
-            Seed();
+            User u = new User()
+            {
+                Id = 1
+            };
+            List<User> users = new List<User>();
+            users.Add(u);
+            _userService = new MockUserService(users);
+            _userAuthService = new MockUserAuthService(users);
         }
 
-        private ApiContext ApiContext { get; set; }
+        private IUserService _userService { get; set; }
+        private IUserAuthService _userAuthService { get; set; }
 
         private enum UserAuthorizationHandlerMode
         {
@@ -36,20 +39,6 @@ namespace Api.Testss
             FAIL = 1,
         }
 
-        private void Seed()
-        {
-            ApiContext.Database.EnsureDeleted();
-            ApiContext.Database.EnsureCreated();
-
-            var user = new User()
-            {
-                Id = 1,
-            };
-
-            ApiContext.Users.Add(user);
-            ApiContext.SaveChanges();
-
-        }
 
         [Fact]
         public async void TestGetRefreshTokenEndpointValidToken()
@@ -81,7 +70,7 @@ namespace Api.Testss
                 }
             };
 
-            AuthController controller = new AuthController(ApiContext, null, options);
+            AuthController controller = new AuthController(_userAuthService, _userService, null, options);
             controller.ControllerContext = controllerContext;
 
             //Act
@@ -92,11 +81,5 @@ namespace Api.Testss
             Assert.NotNull(result.Value);
 
         }
-
-        public void Dispose()
-        {
-            ApiContext.Dispose();
-        }
-
     }
 }

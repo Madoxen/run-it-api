@@ -5,14 +5,14 @@ using Api.Handlers;
 using Api.Models;
 using Microsoft.AspNetCore.Authorization;
 
-namespace Api.Test.Mocks
+namespace Api.Tests.Mocks
 {
     public class MockUserAuthorizationHandlerSuccess :
-        AuthorizationHandler<SameUserIDRequirement, User>
+        AuthorizationHandler<SameUserIDRequirement, int>
     {
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context,
                                                        SameUserIDRequirement requirement,
-                                                       User user)
+                                                       int userId)
         {
             context.Succeed(requirement);
             return Task.CompletedTask;
@@ -20,11 +20,11 @@ namespace Api.Test.Mocks
     }
 
     public class MockUserAuthorizationHandlerFail :
-       AuthorizationHandler<SameUserIDRequirement, User>
+       AuthorizationHandler<SameUserIDRequirement, int>
     {
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context,
                                                        SameUserIDRequirement requirement,
-                                                       User user)
+                                                       int userId)
         {
             context.Fail();
             return Task.CompletedTask;
