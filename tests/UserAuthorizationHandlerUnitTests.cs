@@ -4,6 +4,7 @@ using Xunit;
 using System.Security.Claims;
 using Api.Handlers;
 using Microsoft.AspNetCore.Authorization;
+using Api.Services;
 
 namespace Api.Tests
 {
@@ -14,7 +15,12 @@ namespace Api.Tests
             SUCC,
             FAIL
         }
-        
+
+        public UserAuthorizationHandlerUnitTests()
+        {
+         
+        }
+
         private AuthorizationHandlerContext ArrangeAuthContext(ContextMode mode = ContextMode.SUCC)
         {
             User resource = new User()
@@ -33,18 +39,18 @@ namespace Api.Tests
             var user = new ClaimsPrincipal(identity);
             var requirements = new[] { new SameUserIDRequirement() };
 
-            return new AuthorizationHandlerContext(requirements, user, resource);
+            return new AuthorizationHandlerContext(requirements, user, resource.Id);
         }
 
         [Fact]
-        public void TestValidUser()
+        public async void TestValidUser()
         {
             //Arrange
             var authContext = ArrangeAuthContext();
             UserAuthorizationHandler handler = new UserAuthorizationHandler();
 
             //Act
-            handler.HandleAsync(authContext);
+            await handler.HandleAsync(authContext);
 
             //Assert
             Assert.True(authContext.HasSucceeded);
@@ -52,14 +58,15 @@ namespace Api.Tests
         }
 
         [Fact]
-        public void TestInvalidUser()
+        public async void TestInvalidUser()
         {
             //Arrange
             var authContext = ArrangeAuthContext(ContextMode.FAIL);
             UserAuthorizationHandler handler = new UserAuthorizationHandler();
 
+            
             //Act
-            handler.HandleAsync(authContext);
+            await handler.HandleAsync(authContext);
 
             //Assert
             Assert.True(authContext.HasFailed);

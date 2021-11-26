@@ -12,49 +12,35 @@ using Microsoft.Extensions.Options;
 using Api.Configuration.Options;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
-using Api.Test.Mocks;
+using Api.Tests.Mocks;
 using Microsoft.EntityFrameworkCore;
 using System;
-
+using Api.Services;
 
 namespace Api.Tests
 {
-    public class UserControllerUnitTests : IDisposable
+    public class UserControllerUnitTests
     {
         public UserControllerUnitTests()
         {
-            var options = new DbContextOptionsBuilder<ApiContext>()
-              .UseNpgsql($"Server=test_db;Database={Guid.NewGuid().ToString()};Username=admin;Password=admin")
-              .Options;
+            List<User> users = new List<User>();
+            var user = new User()
+            {
+                Id = 1,
+                Weight = 1,
+            };
+            users.Add(user);
 
-            ApiContext = new ApiContext(options);
-
-            //insert the data that you want to be seeded for each test method:
-            Seed();
+            _userService = new MockUserService(users);
         }
 
-        private ApiContext ApiContext { get; set; }
+        private IUserService _userService { get; set; }
 
         private enum UserAuthorizationHandlerMode
         {
             SUCC = 0,
             FAIL = 1,
         }
-
-        private void Seed()
-        {
-            ApiContext.Database.EnsureCreated();
-
-            var user = new User()
-            {
-                Id = 1,
-                Weight = 1,
-            };
-
-            ApiContext.Users.Add(user);
-            ApiContext.SaveChanges();
-        }
-
 
         private IAuthorizationService ArrangeAuthService(
             IAuthorizationService authService = null,
@@ -119,9 +105,9 @@ namespace Api.Tests
             return context;
         }
 
-        private UserController CreateDefaultTestController(ApiContext context, UserAuthorizationHandlerMode authMode = UserAuthorizationHandlerMode.SUCC)
+        private UserController CreateDefaultTestController(IUserService userService, UserAuthorizationHandlerMode authMode = UserAuthorizationHandlerMode.SUCC)
         {
-            UserController controller = new UserController(context, ArrangeAuthService(handlerType: authMode));
+            UserController controller = new UserController(userService, ArrangeAuthService(handlerType: authMode));
             controller.ControllerContext = ArrangeControllerContext();
             return controller;
         }
@@ -131,14 +117,14 @@ namespace Api.Tests
         {
 
             //Arrange
-            UserController controller = CreateDefaultTestController(ApiContext);
+            UserController controller = CreateDefaultTestController(_userService);
 
             //Act
             ActionResult<User> result = await controller.Get(1);
 
             //Assert
             Assert.IsType<User>(result.Value);
-            
+
         }
 
 
@@ -147,7 +133,7 @@ namespace Api.Tests
         {
 
             //Arrange
-            UserController controller = CreateDefaultTestController(ApiContext);
+            UserController controller = CreateDefaultTestController(_userService);
 
             //Act
             ActionResult<User> result = await controller.Get(2);
@@ -161,17 +147,15 @@ namespace Api.Tests
         [Fact]
         public async void TestDeleteEndpointWithExistingID()
         {
-
             //Arrange
-            UserController controller = CreateDefaultTestController(ApiContext);
+            UserController controller = CreateDefaultTestController(_userService);
 
             //Act
             var result = await controller.Delete(1);
 
             //Assert
-            Assert.Null(await ApiContext.Users.FindAsync(1));
+            Assert.Null(await _userService.GetUserById(1));
             Assert.IsType<OkResult>(result);
-
         }
 
 
@@ -180,7 +164,7 @@ namespace Api.Tests
         {
 
             //Arrange
-            UserController controller = CreateDefaultTestController(ApiContext);
+            UserController controller = CreateDefaultTestController(_userService);
 
             //Act
             var result = await controller.Delete(2);
@@ -195,19 +179,19 @@ namespace Api.Tests
         {
 
             //Arrange
-            UserController controller = CreateDefaultTestController(ApiContext);
+            UserController controller = CreateDefaultTestController(_userService);
 
             //Act
-            await controller.Put(new Payloads.UserPayload()
+            var result = await controller.Put(new Payloads.UserPayload()
             {
                 Id = 1,
                 Weight = 10
             });
 
             //Assert
-            var result = await ApiContext.Users.FindAsync(1);
-            Assert.Equal(10, result.Weight);
-
+            var result_service = await _userService.GetUserById(1);
+            Assert.IsType<OkResult>(result);
+            Assert.Equal(10, result_service.Weight);
         }
 
 
@@ -216,7 +200,7 @@ namespace Api.Tests
         {
 
             //Arrange
-            UserController controller = CreateDefaultTestController(ApiContext);
+            UserController controller = CreateDefaultTestController(_userService);
 
             //Act
             var result = await controller.Put(new Payloads.UserPayload()
@@ -226,17 +210,16 @@ namespace Api.Tests
             });
 
             //Assert
-            var contextResult = await ApiContext.Users.FindAsync(1);
-            Assert.IsType<NotFoundResult>(result);
+            var contextResult = await _userService.GetUserById(1);
+            Assert.IsType<NotFoundObjectResult>(result);
             Assert.Equal(1, contextResult.Weight);
         }
 
         [Fact]
         public async void TestGetUnauthorized()
         {
-
             //Arrange
-            UserController controller = CreateDefaultTestController(ApiContext, UserAuthorizationHandlerMode.FAIL);
+            UserController controller = CreateDefaultTestController(_userService, UserAuthorizationHandlerMode.FAIL);
 
             //Act
             var result = await controller.Get(1);
@@ -250,9 +233,8 @@ namespace Api.Tests
         [Fact]
         public async void TestUpdateUnauthorized()
         {
-
             //Arrange
-            UserController controller = CreateDefaultTestController(ApiContext, UserAuthorizationHandlerMode.FAIL);
+            UserController controller = CreateDefaultTestController(_userService, UserAuthorizationHandlerMode.FAIL);
 
             //Act
             var result = await controller.Put(new Payloads.UserPayload()
@@ -262,10 +244,9 @@ namespace Api.Tests
             });
 
             //Assert
-            var contextResult = await ApiContext.Users.FindAsync(1);
+            var contextResult = await _userService.GetUserById(1);
             Assert.IsType<UnauthorizedResult>(result);
             Assert.Equal(1, contextResult.Weight);
-
         }
 
         [Fact]
@@ -273,19 +254,13 @@ namespace Api.Tests
         {
 
             //Arrange
-            UserController controller = CreateDefaultTestController(ApiContext, UserAuthorizationHandlerMode.FAIL);
+            UserController controller = CreateDefaultTestController(_userService, UserAuthorizationHandlerMode.FAIL);
             //Act
             var result = await controller.Delete(1);
             //Assert
-            var contextResult = await ApiContext.Users.FindAsync(1);
+            var contextResult = await _userService.GetUserById(1);
             Assert.IsType<UnauthorizedResult>(result);
             Assert.NotNull(contextResult);
-
-        }
-
-        public void Dispose()
-        {
-            ApiContext.Dispose();
         }
     }
 }

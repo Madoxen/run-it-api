@@ -13,39 +13,20 @@ using Microsoft.Extensions.Options;
 using Api.Configuration.Options;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
-using Api.Test.Mocks;
+using Api.Tests.Mocks;
 using Api.Payloads;
 using System;
 using System.Linq;
+using Api.Services;
 
 namespace Api.Tests
 {
 
-    public class FriendRequestControllerUnitTests : IDisposable
+    public class FriendRequestControllerUnitTests
     {
         public FriendRequestControllerUnitTests()
         {
-            var options = new DbContextOptionsBuilder<ApiContext>()
-              .UseNpgsql($"Server=test_db;Database={Guid.NewGuid().ToString()};Username=admin;Password=admin")
-              .Options;
-
-            ApiContext = new ApiContext(options);
-
-            //insert the data that you want to be seeded for each test method:
-            Seed();
-        }
-
-        private ApiContext ApiContext { get; set; }
-        private enum UserAuthorizationHandlerMode
-        {
-            SUCC = 0,
-            FAIL = 1,
-        }
-
-        private void Seed()
-        {
-            ApiContext.Database.EnsureCreated();
-
+            List<User> users = new List<User>();
             var user = new User()
             {
                 Id = 1,
@@ -58,13 +39,23 @@ namespace Api.Tests
                 Weight = 1,
             };
 
-            ApiContext.Users.Add(user);
-            ApiContext.Users.Add(friend);
+            users.Add(user);
+            users.Add(friend);
             user.FriendRequests = new List<User>();
             friend.FriendRequests = new List<User>();
             user.FriendRequests.Add(friend);
             friend.FriendRequests.Add(user);
-            ApiContext.SaveChanges();
+
+            _friendRequestService = new MockFriendRequestService(users);
+            _userService = new MockUserService(users);
+        }
+
+        private IFriendRequestService _friendRequestService { get; set; }
+        private IUserService _userService { get; set; }
+        private enum UserAuthorizationHandlerMode
+        {
+            SUCC = 0,
+            FAIL = 1,
         }
 
         private IAuthorizationService ArrangeAuthService(
@@ -132,7 +123,7 @@ namespace Api.Tests
 
         private FriendRequestController CreateDefaultTestController()
         {
-            FriendRequestController controller = new FriendRequestController(ApiContext, ArrangeAuthService());
+            FriendRequestController controller = new FriendRequestController(_friendRequestService, _userService, ArrangeAuthService());
             controller.ControllerContext = ArrangeControllerContext();
             return controller;
         }
@@ -175,10 +166,10 @@ namespace Api.Tests
 
             //Act
             var result = await controller.Delete(1, 2);
-            var context_result = ApiContext.Users.Include(x => x.FriendRequests).First(x => x.Id == 1);
+            var context_result = await _friendRequestService.GetFriendRequests(1);
 
             //Assert
-            Assert.Empty(context_result.FriendRequests);
+            Assert.Empty(context_result.Value);
             Assert.IsType<OkResult>(result);
         }
 
@@ -201,7 +192,7 @@ namespace Api.Tests
         public async void TestGetUnauthorized()
         {
             //Arrange
-            FriendRequestController controller = new FriendRequestController(ApiContext, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
+            FriendRequestController controller = new FriendRequestController(_friendRequestService, _userService, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
             controller.ControllerContext = ArrangeControllerContext();
             //Act
             var result = await controller.Get(1);
@@ -215,21 +206,18 @@ namespace Api.Tests
         public async void TestDeleteUnauthorized()
         {
             //Arrange
-            FriendRequestController controller = new FriendRequestController(ApiContext, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
+            FriendRequestController controller = new FriendRequestController(_friendRequestService, _userService, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
             controller.ControllerContext = ArrangeControllerContext();
             //Act
             var result = await controller.Delete(1, 2);
-            var context_result = await ApiContext.Users.Include(x => x.FriendRequests).FirstAsync(x => x.Id == 1);
+            var context_result = await _friendRequestService.GetFriendRequests(1);
             //Assert
             Assert.IsType<UnauthorizedResult>(result);
 
-            Assert.Equal(1, context_result.FriendRequests.Count());
+            Assert.Equal(1, context_result.Value.Count());
         }
 
-        public void Dispose()
-        {
-            ApiContext.Dispose();
-        }
+
     }
 }
 

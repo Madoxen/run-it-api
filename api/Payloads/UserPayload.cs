@@ -7,9 +7,12 @@ namespace Api.Payloads
         public int Id { get; set; }
         public float? Weight { get; set; }
 
-        public void ApplyToModel(User model)
+        public User CreateModel()
         {
-            model.Weight = Weight;
+            return new User() {
+                Id = Id,
+                Weight = Weight
+            };
         }
     }
 }
