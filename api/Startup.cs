@@ -80,9 +80,9 @@ namespace Api
             });
 
             services.AddSingleton<IAuthorizationHandler, UserAuthorizationHandler>();
-            services.AddSingleton<IUserService, UserService>();
-            services.AddSingleton<IFriendService, FriendService>();
-            services.AddSingleton<IFriendRequestService, FriendRequestService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IFriendService, FriendService>();
+            services.AddScoped<IFriendRequestService, FriendRequestService>();
 
             services.AddHttpClient();
 
