@@ -53,7 +53,7 @@ namespace Api.Tests.Mocks
             return Success();
         }
 
-        public void CreateUser(User u)
+        public async Task CreateUser(User u)
         {
             usersStore.Add(u);
         }

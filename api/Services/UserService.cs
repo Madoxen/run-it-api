@@ -10,7 +10,7 @@ namespace Api.Services
         Task<ServiceResult> RemoveUserById(int id);
         Task<ServiceResult> RemoveUser(User u);
         Task<ServiceResult> UpdateUser(User u);
-        void CreateUser(User u);
+        Task CreateUser(User u);
     }
 
     public class UserService : ServiceBase, IUserService
@@ -54,7 +54,7 @@ namespace Api.Services
             return Success();
         }
 
-        public async void CreateUser(User u)
+        public async Task CreateUser(User u)
         {
             _context.Users.Add(u);
             await _context.SaveChangesAsync();

@@ -91,7 +91,7 @@ namespace Api.Controllers
                     LastName = googleJWTPayload.FamilyName,
                 };
 
-                _userService.CreateUser(user);
+                await _userService.CreateUser(user);
                 // Returns the 'access_token' and the type in lower case
                 return CreateJwtAuthPayload(user.Id);
             }
@@ -168,7 +168,7 @@ namespace Api.Controllers
                 Email = userPayload.Email
             };
 
-            _userService.CreateUser(user);
+            await _userService.CreateUser(user);
             // Returns the 'access_token' and the type in lower case
             return CreateJwtAuthPayload(user.Id);
         }
