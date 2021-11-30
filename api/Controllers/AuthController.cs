@@ -25,6 +25,7 @@ using Microsoft.AspNetCore.Authorization;
 using Api.Payloads;
 using System.Runtime.CompilerServices;
 using Api.Services;
+using System.IO;
 
 namespace Api.Controllers
 {
@@ -125,8 +126,11 @@ namespace Api.Controllers
             if (!response.IsSuccessStatusCode)
                 return Unauthorized("FB graph API rejected the token");
 
-            var responseBodyStream = await response.Content.ReadAsStreamAsync();
-            FacebookAuthPayload.Data authPayload = (await JsonSerializer.DeserializeAsync<FacebookAuthPayload>(responseBodyStream)).PayloadData;
+
+            using var authResponseStream = await response.Content.ReadAsStreamAsync();
+            FacebookAuthPayload.Data authPayload = (await JsonSerializer.DeserializeAsync<FacebookAuthPayload>(authResponseStream)).PayloadData;
+
+
 
             if (authPayload.IsValid == false)
                 return Unauthorized("Auth token not valid");
@@ -151,11 +155,11 @@ namespace Api.Controllers
             response = await httpClient.SendAsync(new HttpRequestMessage()
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri($"https://graph.facebook.com/{sub}?fields=email,first_name,last_name")
+                RequestUri = new Uri($"https://graph.facebook.com/{sub}?fields=email,first_name,last_name&access_token={_authOptions.Facebook.AppID}|{_authOptions.Facebook.AppSecret}")
             });
 
-            responseBodyStream = await response.Content.ReadAsStreamAsync();
-            FacebookUserDataPayload userPayload = await JsonSerializer.DeserializeAsync<FacebookUserDataPayload>(responseBodyStream);
+            using var userInfoResponseStream = await response.Content.ReadAsStreamAsync();
+            FacebookUserDataPayload userPayload = await JsonSerializer.DeserializeAsync<FacebookUserDataPayload>(userInfoResponseStream);
 
             //if user does not exists
             //create an account
