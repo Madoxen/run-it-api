@@ -86,6 +86,9 @@ namespace Api.Controllers
                 {
                     GoogleId = sub,
                     FacebookId = null,
+                    Email = googleJWTPayload.Email,
+                    GivenName = googleJWTPayload.GivenName,
+                    LastName = googleJWTPayload.FamilyName,
                 };
 
                 _userService.CreateUser(user);
@@ -123,26 +126,36 @@ namespace Api.Controllers
                 return Unauthorized("FB graph API rejected the token");
 
             var responseBodyStream = await response.Content.ReadAsStreamAsync();
-            FacebookAuthPayload.Data payload = (await JsonSerializer.DeserializeAsync<FacebookAuthPayload>(responseBodyStream)).PayloadData;
+            FacebookAuthPayload.Data authPayload = (await JsonSerializer.DeserializeAsync<FacebookAuthPayload>(responseBodyStream)).PayloadData;
 
-            if (payload.IsValid == false)
+            if (authPayload.IsValid == false)
                 return Unauthorized("Auth token not valid");
 
-            if (payload.AppId != _authOptions.Facebook.AppID)
+            if (authPayload.AppId != _authOptions.Facebook.AppID)
                 return Unauthorized("Bad AppID in auth token");
 
             //TODO: Verify if both methods use the same timezone and date specifications
-            if (payload.ExpiresAt <= DateTimeOffset.Now.ToUnixTimeSeconds() ||
-            payload.DataAccessExpiresAt <= DateTimeOffset.Now.ToUnixTimeSeconds())
+            if (authPayload.ExpiresAt <= DateTimeOffset.Now.ToUnixTimeSeconds() ||
+            authPayload.DataAccessExpiresAt <= DateTimeOffset.Now.ToUnixTimeSeconds())
                 return Unauthorized("Token expired");
 
 
             //Finally check if the user exists in the database
             //Create new account
-            string sub = payload.UserId;
+            string sub = authPayload.UserId;
             User user = await _userAuthService.GetUserByFacebookId(sub);
             if (user != null)
                 return CreateJwtAuthPayload(user.Id);
+
+
+            response = await httpClient.SendAsync(new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri($"https://graph.facebook.com/{sub}?fields=email,first_name,last_name")
+            });
+
+            responseBodyStream = await response.Content.ReadAsStreamAsync();
+            FacebookUserDataPayload userPayload = await JsonSerializer.DeserializeAsync<FacebookUserDataPayload>(responseBodyStream);
 
             //if user does not exists
             //create an account
@@ -150,6 +163,9 @@ namespace Api.Controllers
             {
                 GoogleId = null,
                 FacebookId = sub,
+                GivenName = userPayload.FirstName,
+                LastName = userPayload.LastName,
+                Email = userPayload.Email
             };
 
             _userService.CreateUser(user);
