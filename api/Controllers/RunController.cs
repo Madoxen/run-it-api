@@ -29,7 +29,7 @@ namespace Api.Controllers
         }
 
         //Gets user profile information
-        [HttpGet("/user/{userId}")]
+        [HttpGet("run/user/{userId}")]
         public async Task<ActionResult<List<Run>>> Get(int userId)
         {
             var authorizationResult = await _authorizationService
