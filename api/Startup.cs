@@ -82,6 +82,7 @@ namespace Api
             services.AddSingleton<IAuthorizationHandler, UserAuthorizationHandler>();
             services.AddScoped<IUserAuthService, UserAuthService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IRunService, RunService>();
             services.AddScoped<IFriendService, FriendService>();
             services.AddScoped<IFriendRequestService, FriendRequestService>();
 
