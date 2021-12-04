@@ -37,6 +37,8 @@ namespace Api.Models
             {
                 if (RawPoints == null)
                     return null;
+                if (_points == null)
+                    _points = GetMapPoints();
                 return _points;
             }
             set
@@ -59,11 +61,12 @@ namespace Api.Models
             MapPoint[] result = new MapPoint[RawPoints.Length / 24];
             for (int i = 0; i < RawPoints.Length; i += 24)
             {
-                double lat = BitConverter.ToDouble(RawPoints[i..8]);
-                double lon = BitConverter.ToDouble(RawPoints[(i + 8)..16]);
-                double height = BitConverter.ToDouble(RawPoints[(i + 16)..24]);
+                double lat = BitConverter.ToDouble(RawPoints[i..(i+8)]);
+                double lon = BitConverter.ToDouble(RawPoints[(i + 8)..(i+16)]);
+                double height = BitConverter.ToDouble(RawPoints[(i + 16)..(i+24)]);
 
                 MapPoint p = new MapPoint(lat, lon, height);
+                result[i/24] = p;
             }
             return result;
         }

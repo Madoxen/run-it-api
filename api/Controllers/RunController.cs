@@ -30,7 +30,7 @@ namespace Api.Controllers
 
         //Gets user profile information
         [HttpGet("run/user/{userId}")]
-        public async Task<ActionResult<List<Run>>> GetUserRuns(int userId)
+        public async Task<ActionResult<List<RunGetPayload>>> GetUserRuns(int userId)
         {
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, userId, "CheckUserIDResourceAccess");
@@ -38,7 +38,11 @@ namespace Api.Controllers
 
             if (authorizationResult.Succeeded)
             {
-                return await _runService.GetUserRuns(userId);
+                var result = await _runService.GetUserRuns(userId);
+                if (result.Value == null)
+                    return (ActionResult)result.Result;
+                var list = result.Value;
+                return list.Select(x => new RunGetPayload(x)).ToList();
             }
             else
             {
@@ -48,7 +52,7 @@ namespace Api.Controllers
 
         //Gets user profile information
         [HttpGet("{runId}")]
-        public async Task<ActionResult<Run>> GetRun(int runId)
+        public async Task<ActionResult<RunGetPayload>> GetRun(int runId)
         {
             Run targetRun = await _runService.GetRunById(runId);
             if (targetRun == null)
@@ -60,7 +64,7 @@ namespace Api.Controllers
 
             if (authorizationResult.Succeeded)
             {
-                return targetRun;
+                return new RunGetPayload(targetRun);
             }
             else
             {
