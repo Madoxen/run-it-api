@@ -27,6 +27,7 @@ namespace Api.Tests
             var run = new Run()
             {
                 Id = 1,
+                UserId = 1
             };
             runs.Add(run);
 
@@ -73,14 +74,23 @@ namespace Api.Tests
                 authService = Builders.BuildAuthorizationService(services =>
                 {
                     if (handlerType == UserAuthorizationHandlerMode.SUCC)
-                        services.AddScoped<IAuthorizationHandler, MockUserAuthorizationHandlerSuccess>();
+                    {
+                        services.AddSingleton<IAuthorizationHandler, MockUserAuthorizationHandlerSuccess>();
+                        services.AddSingleton<IAuthorizationHandler, MockRunResourceAuthorizationHandlerSuccess>();
+                    }
+
 
                     if (handlerType == UserAuthorizationHandlerMode.FAIL)
-                        services.AddScoped<IAuthorizationHandler, MockUserAuthorizationHandlerFail>();
+                    {
+                        services.AddSingleton<IAuthorizationHandler, MockUserAuthorizationHandlerFail>();
+                        services.AddSingleton<IAuthorizationHandler, MockRunResourceAuthorizationHandlerFail>();
+                    }
+
 
                     services.AddAuthorization(options =>
                     {
                         options.AddPolicy("CheckUserIDResourceAccess", policy => policy.Requirements.Add(new SameUserIDRequirement()));
+                        options.AddPolicy("CheckRunUserIDResourceAccess", policy => policy.Requirements.Add(new RunUserOwnershipRequirement()));
                     });
                 });
             }
@@ -121,14 +131,14 @@ namespace Api.Tests
         }
 
         [Fact]
-        public async void TestGetEndpointWithExistingID()
+        public async void TestGetUserRunsEndpointWithExistingID()
         {
 
             //Arrange
             RunController controller = CreateDefaultTestController(_runService);
 
             //Act
-            ActionResult<List<Run>> result = await controller.Get(1);
+            ActionResult<List<Run>> result = await controller.GetUserRuns(1);
 
             //Assert
             Assert.IsType<List<Run>>(result.Value);
@@ -137,20 +147,54 @@ namespace Api.Tests
 
 
         [Fact]
-        public async void TestGetEndpointWithNonExistingID()
+        public async void TestGetUserRunsEndpointWithNonExistingID()
         {
 
             //Arrange
             RunController controller = CreateDefaultTestController(_runService);
 
             //Act
-            ActionResult<List<Run>> result = await controller.Get(2);
+            ActionResult<List<Run>> result = await controller.GetUserRuns(2);
 
             //Assert
             Assert.IsType<NotFoundObjectResult>(result.Result);
             Assert.Null(result.Value);
 
         }
+
+
+        [Fact]
+        public async void TestGetRunEndpointWithExistingID()
+        {
+
+            //Arrange
+            RunController controller = CreateDefaultTestController(_runService);
+
+            //Act
+            ActionResult<Run> result = await controller.GetRun(1);
+
+            //Assert
+            Assert.IsType<Run>(result.Value);
+        }
+
+
+        [Fact]
+        public async void TestGetRunEndpointWithNonExistingID()
+        {
+
+            //Arrange
+            RunController controller = CreateDefaultTestController(_runService);
+
+            //Act
+            ActionResult<Run> result = await controller.GetRun(2);
+
+            //Assert
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+            Assert.Null(result.Value);
+
+        }
+
+
 
         [Fact]
         public async void TestDeleteEndpointWithExistingID()
@@ -162,8 +206,8 @@ namespace Api.Tests
             var result = await controller.Delete(1);
 
             //Assert
-            Assert.Null(await _runService.GetRunById(1));
             Assert.IsType<OkResult>(result);
+            Assert.Null(await _runService.GetRunById(1));
         }
 
 
@@ -224,13 +268,28 @@ namespace Api.Tests
         }
 
         [Fact]
+        public async void TestGetUserRunsUnauthorized()
+        {
+            //Arrange
+            RunController controller = CreateDefaultTestController(_runService, UserAuthorizationHandlerMode.FAIL);
+
+            //Act
+            var result = await controller.GetUserRuns(1);
+
+            //Assert
+            Assert.IsType<UnauthorizedResult>(result.Result);
+            Assert.Null(result.Value);
+
+        }
+
+        [Fact]
         public async void TestGetUnauthorized()
         {
             //Arrange
             RunController controller = CreateDefaultTestController(_runService, UserAuthorizationHandlerMode.FAIL);
 
             //Act
-            var result = await controller.Get(1);
+            var result = await controller.GetRun(1);
 
             //Assert
             Assert.IsType<UnauthorizedResult>(result.Result);

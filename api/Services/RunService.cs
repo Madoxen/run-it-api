@@ -13,7 +13,7 @@ namespace Api.Services
         Task<ServiceResult> RemoveRunById(int id);
         Task<ServiceResult> RemoveRun(Run u);
         Task<ServiceResult> UpdateRun(Run u);
-        Task CreateRun(Run u);
+        Task<ServiceResult> CreateRun(Run u);
     }
 
     public class RunService : ServiceBase, IRunService
@@ -24,10 +24,11 @@ namespace Api.Services
             _context = context;
         }
 
-        public async Task CreateRun(Run u)
+        public async Task<ServiceResult> CreateRun(Run run)
         {
-            _context.Runs.Add(u);
+            _context.Runs.Add(run);
             await _context.SaveChangesAsync();
+            return Success();
         }
 
         public async Task<Run> GetRunById(int id)
