@@ -26,8 +26,10 @@ namespace Api.Models
         public uint ElevationDelta { get; private set; } //in meters
         public uint DistanceTotal { get; private set; } //in meters
         public DateTime Date { get; set; }
-        private byte[] RawPoints { get; set; } //points tuple vector --- (lat, long, height) 24bytes each section
+        public byte[] RawPoints { get; private set; } //points tuple vector --- (lat, long, height) 24bytes each section
 
+        [NotMapped]
+        private MapPoint[] _points;
         [NotMapped]
         public MapPoint[] Points
         {
@@ -35,15 +37,18 @@ namespace Api.Models
             {
                 if (RawPoints == null)
                     return null;
-                return GetMapPoints();
+                return _points;
             }
             set
             {
                 if (value == null)
                 {
                     RawPoints = null;
+                    DistanceTotal = 0;
+                    ElevationDelta = 0;
                     return;
                 }
+                _points = value;
                 RawPoints = GetRawPoints(value);
                 UpdateComputedValues(value);
             }
