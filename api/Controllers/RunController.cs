@@ -29,7 +29,7 @@ namespace Api.Controllers
         }
 
         //Gets user profile information
-        [HttpGet("run/user/{userId}")]
+        [HttpGet("user/{userId}")]
         public async Task<ActionResult<List<RunGetPayload>>> GetUserRuns(int userId)
         {
             var authorizationResult = await _authorizationService
@@ -73,12 +73,12 @@ namespace Api.Controllers
         }
 
 
-        [HttpDelete("{id}")]
-        public async Task<ActionResult> Delete(int id)
+        [HttpDelete("{runId}")]
+        public async Task<ActionResult> Delete(int runId)
         {
-            Run targetRun = await _runService.GetRunById(id);
+            Run targetRun = await _runService.GetRunById(runId);
             if (targetRun == null)
-                return NotFound($"Run {id} not found");
+                return NotFound($"Run {runId} not found");
 
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, targetRun, "CheckRunUserIDResourceAccess");

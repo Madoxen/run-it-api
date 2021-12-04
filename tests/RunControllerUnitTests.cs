@@ -16,6 +16,7 @@ using Api.Tests.Mocks;
 using Microsoft.EntityFrameworkCore;
 using System;
 using Api.Services;
+using Api.Payloads;
 
 namespace Api.Tests
 {
@@ -138,10 +139,10 @@ namespace Api.Tests
             RunController controller = CreateDefaultTestController(_runService);
 
             //Act
-            ActionResult<List<Run>> result = await controller.GetUserRuns(1);
+            ActionResult<List<RunGetPayload>> result = await controller.GetUserRuns(1);
 
             //Assert
-            Assert.IsType<List<Run>>(result.Value);
+            Assert.IsType<List<RunGetPayload>>(result.Value);
 
         }
 
@@ -154,7 +155,7 @@ namespace Api.Tests
             RunController controller = CreateDefaultTestController(_runService);
 
             //Act
-            ActionResult<List<Run>> result = await controller.GetUserRuns(2);
+            ActionResult<List<RunGetPayload>> result = await controller.GetUserRuns(2);
 
             //Assert
             Assert.IsType<NotFoundObjectResult>(result.Result);
@@ -171,10 +172,10 @@ namespace Api.Tests
             RunController controller = CreateDefaultTestController(_runService);
 
             //Act
-            ActionResult<Run> result = await controller.GetRun(1);
+            ActionResult<RunGetPayload> result = await controller.GetRun(1);
 
             //Assert
-            Assert.IsType<Run>(result.Value);
+            Assert.IsType<RunGetPayload>(result.Value);
         }
 
 
@@ -186,7 +187,7 @@ namespace Api.Tests
             RunController controller = CreateDefaultTestController(_runService);
 
             //Act
-            ActionResult<Run> result = await controller.GetRun(2);
+            ActionResult<RunGetPayload> result = await controller.GetRun(2);
 
             //Assert
             Assert.IsType<NotFoundObjectResult>(result.Result);
