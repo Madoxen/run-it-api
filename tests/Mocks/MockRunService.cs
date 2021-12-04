@@ -61,9 +61,10 @@ namespace Api.Tests.Mocks
             return Success();
         }
 
-        public async Task CreateRun(Run run)
+        public async Task<ServiceResult> CreateRun(Run run)
         {
             runsStore.Add(run);
+            return Success();
         }
     }
 }

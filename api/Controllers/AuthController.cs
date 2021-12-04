@@ -52,12 +52,14 @@ namespace Api.Controllers
 
         [Route("register/google")]
         [HttpPost]
-        //TODO: replace object with concrete type
-        //Registers new account if provided with valid Google token 
+        /// <summary>
+        ///Registers new account if provided with valid Google token
+        /// </summary>
+        /// <returns></returns>
         public async Task<ActionResult<JWTAuthPayload>> GoogleRegister()
         {
             if (!Request.Headers.ContainsKey("Authorization"))
-                return BadRequest("Missing Authorization header");
+            return BadRequest("Missing Authorization header");
 
             string authToken = Request.Headers["Authorization"];
             if (authToken.StartsWith("Bearer "))

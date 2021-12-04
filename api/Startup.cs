@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Api.Configuration.Options;
@@ -14,6 +15,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Reflection;
+using System.IO;
+using System;
 
 namespace Api
 {
@@ -40,6 +44,34 @@ namespace Api
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "run_it_api", Version = "v1" });
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description =
+                   "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 12345abcdef\"",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                {
+                    {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        },
+                        Scheme = "oauth2",
+                        Name = "Bearer",
+                        In = ParameterLocation.Header,
+
+                        },
+                        new List<string>()
+                    }
+                });
             });
 
             var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Authentication:JWT:Key"]));
@@ -77,9 +109,16 @@ namespace Api
                     policy.RequireAuthenticatedUser();
                     policy.Requirements.Add(new SameUserIDRequirement());
                 });
+                options.AddPolicy("CheckRunUserIDResourceAccess", policy =>
+               {
+                   policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+                   policy.RequireAuthenticatedUser();
+                   policy.Requirements.Add(new RunUserOwnershipRequirement());
+               });
             });
 
             services.AddSingleton<IAuthorizationHandler, UserAuthorizationHandler>();
+            services.AddSingleton<IAuthorizationHandler, RunResourceAuthorizationHandler>();
             services.AddScoped<IUserAuthService, UserAuthService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRunService, RunService>();
@@ -95,11 +134,14 @@ namespace Api
         {
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();           
+                app.UseDeveloperExceptionPage();
             }
 
             app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "run_it_api v1"));
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "run_it_api v1");
+            });
 
             app.UseHttpsRedirection();
 

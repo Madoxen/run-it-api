@@ -29,8 +29,8 @@ namespace Api.Controllers
         }
 
         //Gets user profile information
-        [HttpGet("run/user/{userId}")]
-        public async Task<ActionResult<List<Run>>> Get(int userId)
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<List<RunGetPayload>>> GetUserRuns(int userId)
         {
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, userId, "CheckUserIDResourceAccess");
@@ -38,7 +38,11 @@ namespace Api.Controllers
 
             if (authorizationResult.Succeeded)
             {
-                return await _runService.GetUserRuns(userId);
+                var result = await _runService.GetUserRuns(userId);
+                if (result.Value == null)
+                    return (ActionResult)result.Result;
+                var list = result.Value;
+                return list.Select(x => new RunGetPayload(x)).ToList();
             }
             else
             {
@@ -46,15 +50,60 @@ namespace Api.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        public async Task<ActionResult> Delete(int id)
+        //Gets user profile information
+        [HttpGet("{runId}")]
+        public async Task<ActionResult<RunGetPayload>> GetRun(int runId)
         {
+            Run targetRun = await _runService.GetRunById(runId);
+            if (targetRun == null)
+                return NotFound($"Run {runId} not found");
+
             var authorizationResult = await _authorizationService
-                    .AuthorizeAsync(User, id, "CheckUserIDResourceAccess");
+                    .AuthorizeAsync(User, targetRun, "CheckRunUserIDResourceAccess");
+
 
             if (authorizationResult.Succeeded)
             {
-                var result = await _runService.RemoveRunById(id);
+                return new RunGetPayload(targetRun);
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+
+        [HttpDelete("{runId}")]
+        public async Task<ActionResult> Delete(int runId)
+        {
+            Run targetRun = await _runService.GetRunById(runId);
+            if (targetRun == null)
+                return NotFound($"Run {runId} not found");
+
+            var authorizationResult = await _authorizationService
+                    .AuthorizeAsync(User, targetRun, "CheckRunUserIDResourceAccess");
+
+            if (authorizationResult.Succeeded)
+            {
+                var result = await _runService.RemoveRun(targetRun);
+                return result;
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> Post(RunCreatePayload payload)
+        {
+            var authorizationResult = await _authorizationService
+                    .AuthorizeAsync(User, payload.UserId, "CheckUserIDResourceAccess");
+
+            if (authorizationResult.Succeeded)
+            {
+                Run run = payload.CreateModel();
+                var result = await _runService.CreateRun(run);
                 return result;
             }
             else
@@ -67,8 +116,7 @@ namespace Api.Controllers
         public async Task<ActionResult> Put(RunUpdatePayload payload)
         {
             var authorizationResult = await _authorizationService
-                    .AuthorizeAsync(User, payload.Id, "CheckUserIDResourceAccess");
-
+                    .AuthorizeAsync(User, payload.UserId, "CheckUserIDResourceAccess");
 
             if (authorizationResult.Succeeded)
             {
