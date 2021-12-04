@@ -9,8 +9,11 @@ namespace Api.Models
     {
         [Key]
         public int Id { get; set; }
+        public string Title { get; set; }
+        public string Subtitle { get; set; }
         public uint Duration { get; set; } //in seconds
         public uint ElevationDelta { get; set; } //in meters
+        public uint DistanceTotal { get; set; } //in meters
         public DateTime Date { get; set; }
         public byte[] Points { get; set; } //points tuple vector --- (lat, long)
     }
