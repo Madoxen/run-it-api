@@ -110,18 +110,26 @@ namespace Api
                     policy.Requirements.Add(new SameUserIDRequirement());
                 });
                 options.AddPolicy("CheckRunUserIDResourceAccess", policy =>
-               {
-                   policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
-                   policy.RequireAuthenticatedUser();
-                   policy.Requirements.Add(new RunUserOwnershipRequirement());
-               });
+                {
+                    policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+                    policy.RequireAuthenticatedUser();
+                    policy.Requirements.Add(new RunUserOwnershipRequirement());
+                });
+                options.AddPolicy("CheckRouteUserIDResourceAccess", policy =>
+                 {
+                     policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+                     policy.RequireAuthenticatedUser();
+                     policy.Requirements.Add(new RouteUserOwnershipRequirement());
+                 });
             });
 
             services.AddSingleton<IAuthorizationHandler, UserAuthorizationHandler>();
             services.AddSingleton<IAuthorizationHandler, RunResourceAuthorizationHandler>();
+            services.AddSingleton<IAuthorizationHandler, RouteResourceAuthorizationHandler>();
             services.AddScoped<IUserAuthService, UserAuthService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRunService, RunService>();
+            services.AddScoped<IRouteService, RouteService>();
             services.AddScoped<IFriendService, FriendService>();
             services.AddScoped<IFriendRequestService, FriendRequestService>();
 
