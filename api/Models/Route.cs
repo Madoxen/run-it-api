@@ -7,10 +7,10 @@ using Utils.Geography;
 
 namespace Api.Models
 {
-    //Singular training
-    public class Run : IEntity
+    //Saved route
+    public class Route : IEntity
     {
-        public Run() { }
+        public Route() { }
 
         [Key]
         public int Id { get; set; }
@@ -23,10 +23,8 @@ namespace Api.Models
         //Data
         public string Title { get; set; }
         public string Subtitle { get; set; }
-        public uint Duration { get; set; } //in seconds
         public uint ElevationDelta { get; private set; } //in meters
         public uint DistanceTotal { get; private set; } //in meters
-        public DateTime Date { get; set; }
         public byte[] RawPoints { get; private set; } //points tuple vector --- (lat, long, height) 24bytes each section
 
         [NotMapped]
