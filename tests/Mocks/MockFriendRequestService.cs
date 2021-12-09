@@ -23,6 +23,9 @@ namespace Api.Tests.Mocks
 
         public async Task<ServiceResult> AddFriendRequest(int userId, int friendId)
         {
+            if(userId == friendId)
+                return Conflict("Cannot add friend that has the same ID as a user");
+
             User user = usersStore.Find(x => x.Id == userId);
             User friend = usersStore.Find(x => x.Id == friendId);
 

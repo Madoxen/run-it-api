@@ -24,5 +24,14 @@ namespace Api.Services
             return new SuccessServiceResult(message);
         }
 
+        protected static ConflictServiceResult Conflict()
+        {
+            return new ConflictServiceResult();
+        }
+
+        protected static ConflictServiceResult Conflict(string message)
+        {
+            return new ConflictServiceResult(message);
+        }
     }
 }

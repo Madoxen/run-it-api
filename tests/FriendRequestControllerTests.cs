@@ -157,6 +157,34 @@ namespace Api.Tests
             Assert.Null(result.Value);
         }
 
+        [Fact]
+        public async void TestPostEndpointWithNonExistingID()
+        {
+            //Arrange
+            FriendRequestController controller = CreateDefaultTestController();
+
+            //Act
+            ActionResult<List<FriendPayload>> result = await controller.Post(1,3);
+
+            //Assert
+            Assert.IsType<NotFoundObjectResult>(result.Result);
+            Assert.Null(result.Value);
+        }
+
+        [Fact]
+        public async void TestPostEndpointConflict()
+        {
+            //Arrange
+            FriendRequestController controller = CreateDefaultTestController();
+
+            //Act
+            ActionResult<List<FriendPayload>> result = await controller.Post(1,1);
+
+            //Assert
+            Assert.IsType<ConflictObjectResult>(result.Result);
+            Assert.Null(result.Value);
+        }
+
 
         [Fact]
         public async void TestDeleteEndpointWithExistingID()

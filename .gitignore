@@ -5,6 +5,8 @@
 appsettings.json
 data/
 
+tests/reports
+
 # Visual Studio Code configuration files
 .vscode/
 
