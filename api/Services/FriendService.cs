@@ -23,6 +23,9 @@ namespace Api.Services
 
         public async Task<ServiceResult> AddFriend(int userId, int friendId)
         {
+            if(userId == friendId)
+                return Conflict("Cannot add friend that has the same ID as a user");
+
             User user = await _context.Users
             .Include(x => x.Friends)
             .FirstOrDefaultAsync(x => x.Id == userId);

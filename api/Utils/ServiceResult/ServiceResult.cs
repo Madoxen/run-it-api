@@ -22,6 +22,12 @@ namespace Api.Utils
                     return new NotFoundObjectResult(result.Message);
                 return new NotFoundResult();
             }
+            else if (result is ConflictServiceResult)
+            {
+                if (!string.IsNullOrEmpty(result.Message))
+                    return new ConflictObjectResult(result.Message);
+                return new ConflictResult();
+            }
 
             throw new InvalidCastException($"Could not cast underlaying result {result.GetType()} to ActionResult<T>");
         }
