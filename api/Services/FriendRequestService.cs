@@ -41,6 +41,9 @@ namespace Api.Services
             if (friend == null)
                 return NotFound("Friend not found");
 
+            if(user.Friends.Contains(friend))
+                return Conflict($"{friendId} already is friends with {userId}");
+
             //give friend request to a friend
             friend.FriendRequests.Add(user);
             if (user.FriendRequests.Contains(friend))
