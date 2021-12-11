@@ -21,7 +21,7 @@ namespace Api.Models
         public string LastName { get; set; }
         public List<Run> Runs { get; set; } //user trainings
         public List<Route> Routes { get; set; } //saved user routes 
-        public List<User> Friends { get; set; }
-        public List<User> FriendRequests { get; set; }
+        public List<Friend> Friends { get; set; }
+        public List<FriendRequest> FriendRequests { get; set; }
     }
 }
