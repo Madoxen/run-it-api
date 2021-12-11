@@ -5,6 +5,7 @@ namespace Api.Payloads
 {
     public class RouteGetPayload : IModelPayload<Route>
     {
+        public int Id { get; set; }
         public int UserId { get; set; }
         public string Title { get; set; }
         public string Subtitle { get; set; }
@@ -17,6 +18,7 @@ namespace Api.Payloads
 
         public RouteGetPayload(Route model)
         {
+            Id = model.Id;
             UserId = model.UserId;
             Title = model.Title;
             Subtitle = model.Subtitle;
