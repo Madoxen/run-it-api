@@ -9,11 +9,18 @@ namespace Api.Models
     public class Friend
     {
         public DateTimeOffset Date { get; set; }
-        public int UserId { get; set; }
-        public User User { get; set; }
+        public int RequesterId { get; set; }
+        public User Requester { get; set; }
 
-        public int FriendUserId { get; set; }
-        public User FriendUser { get; set; }
+        public int ReceiverId { get; set; }
+        public User Receiver { get; set; }
 
+        public AcceptanceStatus Status { get; set; }
+    }
+
+    public enum AcceptanceStatus
+    {
+        Requested = 0,
+        Friends = 1,
     }
 }
