@@ -26,7 +26,7 @@ namespace Api.Models
         public uint Duration { get; set; } //in seconds
         public uint ElevationDelta { get; private set; } //in meters
         public uint DistanceTotal { get; private set; } //in meters
-        public DateTime Date { get; set; }
+        public DateTimeOffset Date { get; set; }
         public byte[] RawPoints { get; private set; } //points tuple vector --- (lat, long, height) 24bytes each section
 
         [NotMapped]

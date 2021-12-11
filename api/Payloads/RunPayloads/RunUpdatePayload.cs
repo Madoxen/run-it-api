@@ -10,7 +10,6 @@ namespace Api.Payloads
         public string Title { get; set; }
         public string Subtitle { get; set; }
         public uint Duration { get; set; } //in seconds
-        public DateTime Date { get; set; }
         public MapPoint[] Points { get; set; } //points tuple vector --- (lat, long)
 
         public Run CreateModel()
@@ -22,7 +21,6 @@ namespace Api.Payloads
                 Title = this.Title,
                 Subtitle = this.Subtitle,
                 Duration = this.Duration,
-                Date = this.Date,
                 Points = this.Points
             };
         }
