@@ -83,8 +83,8 @@ namespace Api.Services
             return results.Select(x =>
             {
                 if (x.ReceiverId == userId)
-                    return x.Receiver;
-                return x.Requester;
+                    return x.Requester;
+                return x.Receiver;
             }).ToList();
         }
 
