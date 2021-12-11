@@ -18,6 +18,8 @@ using Api.Payloads;
 using System;
 using System.Linq;
 using Api.Services;
+using Moq;
+using Api.Utils;
 
 namespace Api.Tests
 {
@@ -41,16 +43,10 @@ namespace Api.Tests
 
             users.Add(user);
             users.Add(friend);
-            user.Friends = new List<User>();
-            friend.Friends = new List<User>();
-            user.Friends.Add(friend);
-            friend.Friends.Add(user);
 
-            _friendService = new MockFriendService(users);
             _userService = new MockUserService(users);
         }
 
-        private IFriendService _friendService { get; set; }
         private IUserService _userService { get; set; }
         private enum UserAuthorizationHandlerMode
         {
@@ -121,9 +117,9 @@ namespace Api.Tests
             return context;
         }
 
-        private FriendsController CreateDefaultTestController()
+        private FriendsController CreateDefaultTestController(IFriendService friendService)
         {
-            FriendsController controller = new FriendsController(_friendService, _userService, ArrangeAuthService());
+            FriendsController controller = new FriendsController(friendService, _userService, ArrangeAuthService());
             controller.ControllerContext = ArrangeControllerContext();
             return controller;
         }
@@ -132,8 +128,11 @@ namespace Api.Tests
         [Fact]
         public async void TestGetEndpointWithExistingID()
         {
+
             //Arrange
-            FriendsController controller = CreateDefaultTestController();
+            var friendService = new Mock<IFriendService>();
+            friendService.Setup(x => x.GetFriends(1)).ReturnsAsync(new List<User>());
+            FriendsController controller = CreateDefaultTestController(friendService.Object);
 
             //Act
             ActionResult<List<FriendPayload>> result = await controller.Get(1);
@@ -147,7 +146,9 @@ namespace Api.Tests
         public async void TestGetEndpointWithNonExistingID()
         {
             //Arrange
-            FriendsController controller = CreateDefaultTestController();
+            var friendService = new Mock<IFriendService>();
+            friendService.Setup(x => x.GetFriends(3)).ReturnsAsync(new NotFoundServiceResult("not found"));
+            FriendsController controller = CreateDefaultTestController(friendService.Object);
 
             //Act
             ActionResult<List<FriendPayload>> result = await controller.Get(3);
@@ -162,14 +163,14 @@ namespace Api.Tests
         public async void TestDeleteEndpointWithExistingID()
         {
             //Arrange
-            FriendsController controller = CreateDefaultTestController();
+            var friendService = new Mock<IFriendService>();
+            friendService.Setup(x => x.RemoveFriend(1, 2)).ReturnsAsync(new SuccessServiceResult());
+            FriendsController controller = CreateDefaultTestController(friendService.Object);
 
             //Act
             var result = await controller.Delete(1, 2);
-            var context_result = await _friendService.GetFriends(1);
 
             //Assert
-            Assert.Empty(context_result.Value);
             Assert.IsType<OkResult>(result);
         }
 
@@ -178,11 +179,12 @@ namespace Api.Tests
         public async void TestDeleteEndpointWithNonExistingID()
         {
             //Arrange
-            FriendsController controller = CreateDefaultTestController();
-
+            var friendService = new Mock<IFriendService>();
+            friendService.Setup(x => x.RemoveFriend(1, 2)).ReturnsAsync(new NotFoundServiceResult("blabla"));
+            FriendsController controller = CreateDefaultTestController(friendService.Object);
 
             //Act
-            var result = await controller.Delete(1, 3);
+            var result = await controller.Delete(1, 2);
 
             //Assert
             Assert.IsType<NotFoundObjectResult>(result);
@@ -193,7 +195,9 @@ namespace Api.Tests
         public async void TestGetUnauthorized()
         {
             //Arrange
-            FriendsController controller = new FriendsController(_friendService, _userService, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
+            var friendService = new Mock<IFriendService>();
+            friendService.Setup(x => x.GetFriends(1)).ReturnsAsync(new List<User>());
+            FriendsController controller = new FriendsController(friendService.Object, _userService, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
             controller.ControllerContext = ArrangeControllerContext();
             //Act
             var result = await controller.Get(1);
@@ -207,15 +211,14 @@ namespace Api.Tests
         public async void TestDeleteUnauthorized()
         {
             //Arrange
-            FriendsController controller = new FriendsController(_friendService, _userService, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
+            var friendService = new Mock<IFriendService>();
+            friendService.Setup(x => x.RemoveFriend(1, 2)).ReturnsAsync(new NotFoundServiceResult());
+            FriendsController controller = new FriendsController(friendService.Object, _userService, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
             controller.ControllerContext = ArrangeControllerContext();
             //Act
             var result = await controller.Delete(1, 2);
-            var context_result = await _friendService.GetFriends(1);
             //Assert
             Assert.IsType<UnauthorizedResult>(result);
-
-            Assert.Equal(1, context_result.Value.Count());
         }
 
     }

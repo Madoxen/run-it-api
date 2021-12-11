@@ -3,13 +3,14 @@ using System.Threading.Tasks;
 using Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Api.Utils;
+using System.Linq;
 
 namespace Api.Services
 {
     public interface IFriendService
     {
         Task<ServiceResult<List<User>>> GetFriends(int userId);
-        Task<ServiceResult> AddFriend(int userId, int friendId);
+        Task<ServiceResult> SendFriendRequest(int requesterId, int receiverId);
         Task<ServiceResult> RemoveFriend(int userId, int friendId);
     }
 
@@ -21,66 +22,83 @@ namespace Api.Services
             _context = context;
         }
 
-        public async Task<ServiceResult> AddFriend(int userId, int friendId)
+        public async Task<ServiceResult> SendFriendRequest(int requesterId, int receiverId)
         {
-            if (userId == friendId)
+            if (requesterId == receiverId)
                 return Conflict("Cannot add friend that has the same ID as a user");
 
-            User user = await _context.Users
-            .Include(x => x.Friends)
-            .FirstOrDefaultAsync(x => x.Id == userId);
+            User requester = await _context.Users
+            .FirstOrDefaultAsync(x => x.Id == requesterId);
 
-            User friend = await _context.Users
-            .Include(x => x.Friends)
-            .FirstOrDefaultAsync(x => x.Id == friendId);
+            User receiver = await _context.Users
+            .FirstOrDefaultAsync(x => x.Id == receiverId);
 
-            if (user == null)
+            if (requester == null)
                 return NotFound("User not found");
-            if (friend == null)
+            if (receiver == null)
                 return NotFound("Friend not found");
 
-            if (user.Friends.Contains(friend))
-                return Conflict($"{friendId} already is friends with {userId}");
 
-            user.Friends.Add(friend);
-            friend.Friends.Add(user);
+            var friendCheck = await _context.Friends.FirstOrDefaultAsync(x =>
+            x.ReceiverId == receiverId && x.RequesterId == requesterId);
+
+            var reverseFriendCheck = await _context.Friends.FirstOrDefaultAsync(x =>
+             x.ReceiverId == requesterId && x.RequesterId == receiverId);
+
+            if (friendCheck?.Status == AcceptanceStatus.Friends ||
+            reverseFriendCheck?.Status == AcceptanceStatus.Friends)
+                return Conflict($"{receiverId} already is friends with {requesterId}");
+
+
+            if (friendCheck == null && reverseFriendCheck == null)
+                await _context.Friends.AddAsync(new Friend()
+                {
+                    Date = System.DateTimeOffset.UtcNow,
+                    ReceiverId = receiverId,
+                    RequesterId = requesterId,
+                    Status = AcceptanceStatus.Requested
+                });
+
+            if (reverseFriendCheck?.Status == AcceptanceStatus.Requested)
+                reverseFriendCheck.Status = AcceptanceStatus.Friends;
+
+
             await _context.SaveChangesAsync();
-
             return Success();
         }
 
         public async Task<ServiceResult<List<User>>> GetFriends(int userId)
         {
             User user = await _context.Users
-            .Include(x => x.Friends)
             .FirstOrDefaultAsync(x => x.Id == userId);
 
             if (user == null)
-                return new NotFoundServiceResult("User not found");
+                return NotFound("User not found");
 
-            return user.Friends;
+            var results = await _context.Friends
+            .Where(x => (x.ReceiverId == userId || x.RequesterId == userId)
+            && x.Status == AcceptanceStatus.Friends)
+            .ToListAsync();
+
+            return results.Select(x =>
+            {
+                if (x.ReceiverId == userId)
+                    return x.Receiver;
+                return x.Requester;
+            }).ToList();
         }
 
         public async Task<ServiceResult> RemoveFriend(int userId, int friendId)
         {
-            User user = await _context.Users
-            .Include(x => x.Friends)
-            .FirstOrDefaultAsync(x => x.Id == userId);
+            var friendQueryResult = await _context.Friends.FirstOrDefaultAsync(x =>
+            (x.ReceiverId == userId && x.RequesterId == friendId) ||
+            (x.RequesterId == userId && x.ReceiverId == friendId));
 
-            User friend = await _context.Users
-            .Include(x => x.Friends)
-            .FirstOrDefaultAsync(x => x.Id == friendId);
+            if (friendQueryResult == null)
+                return NotFound("Friend pair not found");
 
-            if (user == null)
-                return NotFound("User not found");
-            if (friend == null)
-                return NotFound("Friend not found");
-
-
-            user.Friends.Remove(friend);
-            friend.Friends.Remove(user);
+            _context.Friends.Remove(friendQueryResult);
             await _context.SaveChangesAsync();
-
             return Success();
         }
     }
