@@ -18,9 +18,12 @@ namespace Api
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Friend>()
+                .HasKey(x => new { x.RequesterId, x.ReceiverId });
+
+            modelBuilder.Entity<Friend>()
                 .HasOne(f => f.Requester)
                 .WithMany()
-                .HasForeignKey(f => f.Requester);
+                .HasForeignKey(f => f.RequesterId);
 
             modelBuilder.Entity<Friend>()
                 .HasOne(f => f.Receiver)

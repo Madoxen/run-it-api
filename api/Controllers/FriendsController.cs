@@ -48,6 +48,24 @@ namespace Api.Controllers
             }
         }
 
+        [HttpPost("{userId}/{friendId}")]
+        public async Task<ActionResult> Post(int userId, int friendId)
+        {
+
+            var authorizationResult = await _authorizationService
+                    .AuthorizeAsync(User, userId, "CheckUserIDResourceAccess");
+
+            if (authorizationResult.Succeeded)
+            {
+                var result = await _friendService.SendFriendRequest(userId, friendId);
+                return result;
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
         [HttpDelete("{userId}/{friendId}")]
         public async Task<ActionResult> Delete(int userId, int friendId)
         {
