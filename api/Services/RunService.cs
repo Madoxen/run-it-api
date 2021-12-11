@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Api.Models;
 using Api.Utils;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Services
@@ -9,7 +11,7 @@ namespace Api.Services
     public interface IRunService
     {
         Task<Run> GetRunById(int id);
-        Task<ServiceResult<List<Run>>> GetUserRuns(int userId);
+        Task<ServiceResult<List<Run>>> GetUserRuns(int userId, DateTimeOffset? from = null);
         Task<ServiceResult> RemoveRunById(int id);
         Task<ServiceResult> RemoveRun(Run u);
         Task<ServiceResult> UpdateRun(Run u);
@@ -37,7 +39,7 @@ namespace Api.Services
             return result;
         }
 
-        public async Task<ServiceResult<List<Run>>> GetUserRuns(int userId)
+        public async Task<ServiceResult<List<Run>>> GetUserRuns(int userId, DateTimeOffset? from = null)
         {
             var users = _context.Users
             .Include(x => x.Runs);
@@ -45,7 +47,9 @@ namespace Api.Services
             var user = await users.FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
                 return NotFound("User not found");
-            return user.Runs;
+            if (from == null)
+                return user.Runs;
+            return user.Runs.FindAll(x => x.Date >= from);
         }
 
         public async Task<ServiceResult> RemoveRun(Run u)

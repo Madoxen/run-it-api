@@ -11,7 +11,7 @@ namespace Api.Payloads
         public uint Duration { get; set; } //in seconds
         public uint DistanceTotal { get; set; }
         public uint ElevationDelta { get; set; }
-        public DateTime Date { get; set; }
+        public DateTimeOffset Date { get; set; }
         public MapPoint[] Points { get; set; } //points tuple vector --- (lat, long)
 
         public RunGetPayload()

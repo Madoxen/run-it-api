@@ -29,7 +29,7 @@ namespace Api.Tests.Mocks
             return runsStore.Find(x => x.Id == id);
         }
 
-        public async Task<ServiceResult<List<Run>>> GetUserRuns(int userId)
+        public async Task<ServiceResult<List<Run>>> GetUserRuns(int userId, DateTimeOffset? date = null)
         {
             var user = usersStore.Find(x => x.Id == userId);
             if (user == null)

@@ -28,17 +28,22 @@ namespace Api.Controllers
             _authorizationService = authorizationService;
         }
 
+
         //Gets user profile information
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<List<RunGetPayload>>> GetUserRuns(int userId)
+        public async Task<ActionResult<List<RunGetPayload>>> GetUserRuns(int userId, long? timestamp = null)
         {
+            
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, userId, "CheckUserIDResourceAccess");
 
 
             if (authorizationResult.Succeeded)
             {
-                var result = await _runService.GetUserRuns(userId);
+                DateTimeOffset? date = null;
+                if (timestamp != null)
+                    date = DateTimeOffset.FromUnixTimeSeconds((long)timestamp);
+                var result = await _runService.GetUserRuns(userId, date);
                 if (result.Value == null)
                     return (ActionResult)result.Result;
                 var list = result.Value;
@@ -49,6 +54,7 @@ namespace Api.Controllers
                 return Unauthorized();
             }
         }
+
 
         //Gets user profile information
         [HttpGet("{runId}")]
@@ -103,6 +109,7 @@ namespace Api.Controllers
             if (authorizationResult.Succeeded)
             {
                 Run run = payload.CreateModel();
+                run.Date = DateTimeOffset.UtcNow;
                 var result = await _runService.CreateRun(run);
                 return result;
             }
@@ -121,6 +128,7 @@ namespace Api.Controllers
             if (authorizationResult.Succeeded)
             {
                 Run run = payload.CreateModel();
+                run.Date = DateTimeOffset.UtcNow;
                 var result = await _runService.UpdateRun(run);
                 return result;
             }
