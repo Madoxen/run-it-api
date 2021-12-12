@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Models
@@ -10,9 +11,11 @@ namespace Api.Models
     {
         public DateTimeOffset Date { get; set; }
         public int RequesterId { get; set; }
+
         public User Requester { get; set; }
 
         public int ReceiverId { get; set; }
+
         public User Receiver { get; set; }
 
         public AcceptanceStatus Status { get; set; }

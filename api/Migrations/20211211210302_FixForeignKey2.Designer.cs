@@ -3,15 +3,17 @@ using System;
 using Api;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace run_it_api.Migrations
 {
     [DbContext(typeof(ApiContext))]
-    partial class ApiContextModelSnapshot : ModelSnapshot
+    [Migration("20211211210302_FixForeignKey2")]
+    partial class FixForeignKey2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -149,13 +151,13 @@ namespace run_it_api.Migrations
             modelBuilder.Entity("Api.Models.Friend", b =>
                 {
                     b.HasOne("Api.Models.User", "Receiver")
-                        .WithMany("ReverseFriends")
+                        .WithMany()
                         .HasForeignKey("ReceiverId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Api.Models.User", "Requester")
-                        .WithMany("Friends")
+                        .WithMany()
                         .HasForeignKey("RequesterId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -189,10 +191,6 @@ namespace run_it_api.Migrations
 
             modelBuilder.Entity("Api.Models.User", b =>
                 {
-                    b.Navigation("Friends");
-
-                    b.Navigation("ReverseFriends");
-
                     b.Navigation("Routes");
 
                     b.Navigation("Runs");

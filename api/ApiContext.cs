@@ -22,12 +22,12 @@ namespace Api
 
             modelBuilder.Entity<Friend>()
                 .HasOne(f => f.Requester)
-                .WithMany()
+                .WithMany(u => u.Friends)
                 .HasForeignKey(f => f.RequesterId);
 
             modelBuilder.Entity<Friend>()
                 .HasOne(f => f.Receiver)
-                .WithMany()
+                .WithMany(u => u.ReverseFriends)
                 .HasForeignKey(f => f.ReceiverId);
         }
 

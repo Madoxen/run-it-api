@@ -4,12 +4,14 @@ using Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Api.Utils;
 using System.Linq;
+using System;
 
 namespace Api.Services
 {
     public interface IFriendService
     {
         Task<ServiceResult<List<User>>> GetFriends(int userId);
+        Task<ServiceResult<List<User>>> GetRequests(int userId);
         Task<ServiceResult> SendFriendRequest(int requesterId, int receiverId);
         Task<ServiceResult> RemoveFriend(int userId, int friendId);
     }
@@ -67,6 +69,9 @@ namespace Api.Services
             return Success();
         }
 
+        ///<summary>
+        /// Gets friends of a given user of given status
+        ///</summary>
         public async Task<ServiceResult<List<User>>> GetFriends(int userId)
         {
             User user = await _context.Users
@@ -78,6 +83,8 @@ namespace Api.Services
             var results = await _context.Friends
             .Where(x => (x.ReceiverId == userId || x.RequesterId == userId)
             && x.Status == AcceptanceStatus.Friends)
+            .Include(x => x.Receiver)
+            .Include(x => x.Requester)
             .ToListAsync();
 
             return results.Select(x =>
@@ -86,6 +93,23 @@ namespace Api.Services
                     return x.Requester;
                 return x.Receiver;
             }).ToList();
+        }
+
+        public async Task<ServiceResult<List<User>>> GetRequests(int userId)
+        {
+            User user = await _context.Users
+            .FirstOrDefaultAsync(x => x.Id == userId);
+
+            if (user == null)
+                return NotFound("User not found");
+
+            var results = await _context.Friends
+            .Where(x => (x.ReceiverId == userId)
+            && x.Status == AcceptanceStatus.Requested)
+            .Include(x => x.Requester)
+            .ToListAsync();
+
+            return results.Select(x => x.Requester).ToList();
         }
 
         public async Task<ServiceResult> RemoveFriend(int userId, int friendId)
@@ -101,6 +125,7 @@ namespace Api.Services
             await _context.SaveChangesAsync();
             return Success();
         }
+
     }
 
 }

@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Api.Services;
 using Api.Utils;
+using System;
 
 namespace Api.Controllers
 {
@@ -38,6 +39,26 @@ namespace Api.Controllers
             if (authorizationResult.Succeeded)
             {
                 var result = await _friendService.GetFriends(userId);
+                if (result.Value == null)
+                    return (ActionResult)result.Result;
+                return result.Value.Select(x => new FriendPayload(x)).ToList();
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
+         //Gets user profile information
+        [HttpGet("requests/{userId}")]
+        public async Task<ActionResult<List<FriendPayload>>> GetFriendRequests(int userId)
+        {
+            var authorizationResult = await _authorizationService
+            .AuthorizeAsync(User, userId, "CheckUserIDResourceAccess");
+
+            if (authorizationResult.Succeeded)
+            {
+                var result = await _friendService.GetRequests(userId);
                 if (result.Value == null)
                     return (ActionResult)result.Result;
                 return result.Value.Select(x => new FriendPayload(x)).ToList();
