@@ -59,7 +59,7 @@ namespace Api.Controllers
         public async Task<ActionResult<JWTAuthPayload>> GoogleRegister()
         {
             if (!Request.Headers.ContainsKey("Authorization"))
-            return BadRequest("Missing Authorization header");
+                return BadRequest("Missing Authorization header");
 
             string authToken = Request.Headers["Authorization"];
             if (authToken.StartsWith("Bearer "))
@@ -201,17 +201,7 @@ namespace Api.Controllers
 
         private string CreateAccessToken(int userId)
         {
-            return CreateJWTString(new Claim[] { new Claim("scope", "Access"), new Claim("sub", userId.ToString()) });
-        }
-
-        private string CreateRefreshToken(int userId)
-        {
-            return CreateJWTString(new Claim[] { new Claim("scope", "Refresh"), new Claim("sub", userId.ToString()) });
-        }
-
-        private string CreateJWTString(Claim[] claims)
-        {
-            //TODO: evaluate this copied code 
+            var claims = new Claim[] { new Claim("scope", "Access"), new Claim("sub", userId.ToString()) };
             var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_authOptions.JWT.Key));
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -224,7 +214,24 @@ namespace Api.Controllers
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var access_token = tokenHandler.WriteToken(token);
+            return access_token;
+        }
 
+        private string CreateRefreshToken(int userId)
+        {
+            var claims = new Claim[] { new Claim("scope", "Refresh"), new Claim("sub", userId.ToString()) };
+            var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_authOptions.JWT.Key));
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddMinutes(_authOptions.JWT.RefreshExpiryMinutes),
+                Issuer = _authOptions.JWT.Issuer,
+                Audience = _authOptions.JWT.Audience, //TODO SECURITY: verify audience? 
+                SigningCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var access_token = tokenHandler.WriteToken(token);
             return access_token;
         }
     }

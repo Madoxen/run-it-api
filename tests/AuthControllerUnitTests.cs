@@ -52,6 +52,7 @@ namespace Api.Testss
                     Audience = "runit.co",
                     Issuer = "runit.co",
                     ExpiryMinutes = 20,
+                    RefreshExpiryMinutes = 40,
                     Key = "aaabbbcccdddeeefffggghhhiiijjjkkk"
                 }
             });
