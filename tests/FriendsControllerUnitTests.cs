@@ -27,27 +27,8 @@ namespace Api.Tests
     public class FriendControllerUnitTests
     {
         public FriendControllerUnitTests()
-        {
-            List<User> users = new List<User>();
-            var user = new User()
-            {
-                Id = 1,
-                Weight = 1,
-            };
+        { }
 
-            var friend = new User()
-            {
-                Id = 2,
-                Weight = 1,
-            };
-
-            users.Add(user);
-            users.Add(friend);
-
-            _userService = new MockUserService(users);
-        }
-
-        private IUserService _userService { get; set; }
         private enum UserAuthorizationHandlerMode
         {
             SUCC = 0,
@@ -119,7 +100,7 @@ namespace Api.Tests
 
         private FriendsController CreateDefaultTestController(IFriendService friendService)
         {
-            FriendsController controller = new FriendsController(friendService, _userService, ArrangeAuthService());
+            FriendsController controller = new FriendsController(friendService, ArrangeAuthService());
             controller.ControllerContext = ArrangeControllerContext();
             return controller;
         }
@@ -130,9 +111,9 @@ namespace Api.Tests
         {
 
             //Arrange
-            var friendService = new Mock<IFriendService>();
-            friendService.Setup(x => x.GetFriends(1)).ReturnsAsync(new List<User>());
-            FriendsController controller = CreateDefaultTestController(friendService.Object);
+            var friendServiceMock = new Mock<IFriendService>();
+            friendServiceMock.Setup(x => x.GetFriends(1)).ReturnsAsync(new List<User>());
+            FriendsController controller = CreateDefaultTestController(friendServiceMock.Object);
 
             //Act
             ActionResult<List<FriendPayload>> result = await controller.Get(1);
@@ -146,9 +127,9 @@ namespace Api.Tests
         public async void TestGetEndpointWithNonExistingID()
         {
             //Arrange
-            var friendService = new Mock<IFriendService>();
-            friendService.Setup(x => x.GetFriends(3)).ReturnsAsync(new NotFoundServiceResult("not found"));
-            FriendsController controller = CreateDefaultTestController(friendService.Object);
+            var friendServiceMock = new Mock<IFriendService>();
+            friendServiceMock.Setup(x => x.GetFriends(3)).ReturnsAsync(new NotFoundServiceResult("not found"));
+            FriendsController controller = CreateDefaultTestController(friendServiceMock.Object);
 
             //Act
             ActionResult<List<FriendPayload>> result = await controller.Get(3);
@@ -163,9 +144,9 @@ namespace Api.Tests
         public async void TestDeleteEndpointWithExistingID()
         {
             //Arrange
-            var friendService = new Mock<IFriendService>();
-            friendService.Setup(x => x.RemoveFriend(1, 2)).ReturnsAsync(new SuccessServiceResult());
-            FriendsController controller = CreateDefaultTestController(friendService.Object);
+            var friendServiceMock = new Mock<IFriendService>();
+            friendServiceMock.Setup(x => x.RemoveFriend(1, 2)).ReturnsAsync(new SuccessServiceResult());
+            FriendsController controller = CreateDefaultTestController(friendServiceMock.Object);
 
             //Act
             var result = await controller.Delete(1, 2);
@@ -179,9 +160,9 @@ namespace Api.Tests
         public async void TestDeleteEndpointWithNonExistingID()
         {
             //Arrange
-            var friendService = new Mock<IFriendService>();
-            friendService.Setup(x => x.RemoveFriend(1, 2)).ReturnsAsync(new NotFoundServiceResult("blabla"));
-            FriendsController controller = CreateDefaultTestController(friendService.Object);
+            var friendServiceMock = new Mock<IFriendService>();
+            friendServiceMock.Setup(x => x.RemoveFriend(1, 2)).ReturnsAsync(new NotFoundServiceResult("blabla"));
+            FriendsController controller = CreateDefaultTestController(friendServiceMock.Object);
 
             //Act
             var result = await controller.Delete(1, 2);
@@ -195,15 +176,14 @@ namespace Api.Tests
         public async void TestGetUnauthorized()
         {
             //Arrange
-            var friendService = new Mock<IFriendService>();
-            friendService.Setup(x => x.GetFriends(1)).ReturnsAsync(new List<User>());
-            FriendsController controller = new FriendsController(friendService.Object, _userService, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
+            var friendServiceMock = new Mock<IFriendService>();
+            friendServiceMock.Setup(x => x.GetFriends(1)).ReturnsAsync(new List<User>());
+            FriendsController controller = new FriendsController(friendServiceMock.Object, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
             controller.ControllerContext = ArrangeControllerContext();
             //Act
             var result = await controller.Get(1);
             //Assert
             Assert.IsType<UnauthorizedResult>(result.Result);
-            Assert.Null(result.Value);
         }
 
 
@@ -211,9 +191,9 @@ namespace Api.Tests
         public async void TestDeleteUnauthorized()
         {
             //Arrange
-            var friendService = new Mock<IFriendService>();
-            friendService.Setup(x => x.RemoveFriend(1, 2)).ReturnsAsync(new NotFoundServiceResult());
-            FriendsController controller = new FriendsController(friendService.Object, _userService, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
+            var friendServiceMock = new Mock<IFriendService>();
+            friendServiceMock.Setup(x => x.RemoveFriend(1, 2)).ReturnsAsync(new NotFoundServiceResult());
+            FriendsController controller = new FriendsController(friendServiceMock.Object, ArrangeAuthService(handlerType: UserAuthorizationHandlerMode.FAIL));
             controller.ControllerContext = ArrangeControllerContext();
             //Act
             var result = await controller.Delete(1, 2);

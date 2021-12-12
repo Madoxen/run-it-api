@@ -17,6 +17,8 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using Api.Services;
 using Api.Payloads;
+using Moq;
+using Api.Utils;
 
 namespace Api.Tests
 {
@@ -41,11 +43,7 @@ namespace Api.Tests
                 Routes = routes
             };
             users.Add(user);
-
-            _routeService = new MockRouteService(routes, users);
         }
-
-        private IRouteService _routeService { get; set; }
 
         private enum UserAuthorizationHandlerMode
         {
@@ -135,28 +133,29 @@ namespace Api.Tests
         [Fact]
         public async void TestGetUserRoutesEndpointWithExistingID()
         {
-
             //Arrange
-            RouteController controller = CreateDefaultTestController(_routeService);
+            var routeService = new Mock<IRouteService>();
+            routeService.Setup(x => x.GetUserRoutes(1)).ReturnsAsync(new List<Route>());
+            RouteController controller = CreateDefaultTestController(routeService.Object);
 
             //Act
             ActionResult<List<RouteGetPayload>> result = await controller.GetUserRoutes(1);
 
             //Assert
             Assert.IsType<List<RouteGetPayload>>(result.Value);
-
         }
 
 
         [Fact]
         public async void TestGetUserRoutesEndpointWithNonExistingID()
         {
-
             //Arrange
-            RouteController controller = CreateDefaultTestController(_routeService);
+            var routeService = new Mock<IRouteService>();
+            routeService.Setup(x => x.GetUserRoutes(1)).ReturnsAsync(new NotFoundServiceResult("Not found"));
+            RouteController controller = CreateDefaultTestController(routeService.Object);
 
             //Act
-            ActionResult<List<RouteGetPayload>> result = await controller.GetUserRoutes(2);
+            ActionResult<List<RouteGetPayload>> result = await controller.GetUserRoutes(1);
 
             //Assert
             Assert.IsType<NotFoundObjectResult>(result.Result);
@@ -168,9 +167,10 @@ namespace Api.Tests
         [Fact]
         public async void TestGetRouteEndpointWithExistingID()
         {
-
             //Arrange
-            RouteController controller = CreateDefaultTestController(_routeService);
+            var routeService = new Mock<IRouteService>();
+            routeService.Setup(x => x.GetRouteById(1)).ReturnsAsync(new Route() { Id = 1 });
+            RouteController controller = CreateDefaultTestController(routeService.Object);
 
             //Act
             ActionResult<RouteGetPayload> result = await controller.GetRoute(1);
@@ -183,17 +183,16 @@ namespace Api.Tests
         [Fact]
         public async void TestGetRouteEndpointWithNonExistingID()
         {
-
             //Arrange
-            RouteController controller = CreateDefaultTestController(_routeService);
+            var routeService = new Mock<IRouteService>();
+            routeService.Setup(x => x.GetRouteById(2)).ReturnsAsync((Route)null);
+            RouteController controller = CreateDefaultTestController(routeService.Object);
 
-            //Act
-            ActionResult<RouteGetPayload> result = await controller.GetRoute(2);
+            //ActS
+            ActionResult<RouteGetPayload> result = await controller.GetRoute(1);
 
             //Assert
             Assert.IsType<NotFoundObjectResult>(result.Result);
-            Assert.Null(result.Value);
-
         }
 
 
@@ -202,26 +201,30 @@ namespace Api.Tests
         public async void TestDeleteEndpointWithExistingID()
         {
             //Arrange
-            RouteController controller = CreateDefaultTestController(_routeService);
+            var route = new Route() { Id = 1 };
+            var routeService = new Mock<IRouteService>();
+            routeService.Setup(x => x.GetRouteById(1)).ReturnsAsync(route);
+            routeService.Setup(x => x.RemoveRoute(route)).ReturnsAsync(new SuccessServiceResult());
+            RouteController controller = CreateDefaultTestController(routeService.Object);
 
             //Act
             var result = await controller.Delete(1);
 
             //Assert
             Assert.IsType<OkResult>(result);
-            Assert.Null(await _routeService.GetRouteById(1));
         }
 
 
         [Fact]
         public async void TestDeleteEndpointWithNonExistingID()
         {
-
             //Arrange
-            RouteController controller = CreateDefaultTestController(_routeService);
+            var routeService = new Mock<IRouteService>();
+            routeService.Setup(x => x.GetRouteById(1)).ReturnsAsync((Route)null);
+            RouteController controller = CreateDefaultTestController(routeService.Object);
 
             //Act
-            var result = await controller.Delete(2);
+            var result = await controller.Delete(1);
 
             //Assert
             Assert.IsType<NotFoundObjectResult>(result);
@@ -233,19 +236,20 @@ namespace Api.Tests
         {
 
             //Arrange
-            RouteController controller = CreateDefaultTestController(_routeService);
+            var route = new Route();
+            var mockPayload = new Mock<IRouteUpdatePayload>();
+            mockPayload.Setup(x => x.CreateModel()).Returns(route);
+
+            var routeService = new Mock<IRouteService>();
+            routeService.Setup(x => x.UpdateRoute(route)).ReturnsAsync(new SuccessServiceResult());
+            
+            RouteController controller = CreateDefaultTestController(routeService.Object);
 
             //Act
-            var result = await controller.Put(new Payloads.RouteUpdatePayload()
-            {
-                Id = 1,
-                Title = "haha"
-            });
+            var result = await controller.Put(mockPayload.Object);
 
             //Assert
-            var result_service = await _routeService.GetRouteById(1);
             Assert.IsType<OkResult>(result);
-            Assert.Equal("haha", result_service.Title);
         }
 
 
@@ -253,26 +257,27 @@ namespace Api.Tests
         public async void TestUpdateEndpointWithNonExistingID()
         {
             //Arrange
-            RouteController controller = CreateDefaultTestController(_routeService);
+            var route = new Route();
+            var mockPayload = new Mock<IRouteUpdatePayload>();
+            mockPayload.Setup(x => x.CreateModel()).Returns(route);
+
+            var routeService = new Mock<IRouteService>();
+            routeService.Setup(x => x.UpdateRoute(route)).ReturnsAsync(new NotFoundServiceResult("Not found"));
+            RouteController controller = CreateDefaultTestController(routeService.Object);
 
             //Act
-            var result = await controller.Put(new Payloads.RouteUpdatePayload()
-            {
-                Id = 2,
-                Title = "xd"
-            });
+            var result = await controller.Put(mockPayload.Object);
 
             //Assert
-            var contextResult = await _routeService.GetRouteById(1);
             Assert.IsType<NotFoundObjectResult>(result);
-            Assert.Equal("xd", contextResult.Title);
         }
 
         [Fact]
         public async void TestGetUserRoutesUnauthorized()
         {
             //Arrange
-            RouteController controller = CreateDefaultTestController(_routeService, UserAuthorizationHandlerMode.FAIL);
+            var routeService = new Mock<IRouteService>();
+            RouteController controller = CreateDefaultTestController(routeService.Object, UserAuthorizationHandlerMode.FAIL);
 
             //Act
             var result = await controller.GetUserRoutes(1);
@@ -287,22 +292,23 @@ namespace Api.Tests
         public async void TestGetUnauthorized()
         {
             //Arrange
-            RouteController controller = CreateDefaultTestController(_routeService, UserAuthorizationHandlerMode.FAIL);
+            var routeService = new Mock<IRouteService>();
+            routeService.Setup(x => x.GetRouteById(1)).ReturnsAsync(new Route());
+            RouteController controller = CreateDefaultTestController(routeService.Object, UserAuthorizationHandlerMode.FAIL);
 
             //Act
             var result = await controller.GetRoute(1);
 
             //Assert
             Assert.IsType<UnauthorizedResult>(result.Result);
-            Assert.Null(result.Value);
-
         }
 
         [Fact]
         public async void TestUpdateUnauthorized()
         {
             //Arrange
-            RouteController controller = CreateDefaultTestController(_routeService, UserAuthorizationHandlerMode.FAIL);
+            var routeService = new Mock<IRouteService>();
+            RouteController controller = CreateDefaultTestController(routeService.Object, UserAuthorizationHandlerMode.FAIL);
 
             //Act
             var result = await controller.Put(new Payloads.RouteUpdatePayload()
@@ -312,9 +318,7 @@ namespace Api.Tests
             });
 
             //Assert
-            var contextResult = await _routeService.GetRouteById(1);
             Assert.IsType<UnauthorizedResult>(result);
-            Assert.Equal("xd", contextResult.Title);
         }
 
         [Fact]
@@ -322,13 +326,15 @@ namespace Api.Tests
         {
 
             //Arrange
-            RouteController controller = CreateDefaultTestController(_routeService, UserAuthorizationHandlerMode.FAIL);
+            var routeService = new Mock<IRouteService>();
+            routeService.Setup(x => x.GetRouteById(1)).ReturnsAsync(new Route());
+            RouteController controller = CreateDefaultTestController(routeService.Object, UserAuthorizationHandlerMode.FAIL);
+
             //Act
             var result = await controller.Delete(1);
+
             //Assert
-            var contextResult = await _routeService.GetRouteById(1);
             Assert.IsType<UnauthorizedResult>(result);
-            Assert.NotNull(contextResult);
         }
     }
 }

@@ -16,6 +16,9 @@ using Api.Tests.Mocks;
 using Microsoft.EntityFrameworkCore;
 using System;
 using Api.Services;
+using Moq;
+using Api.Utils;
+using Api.Payloads;
 
 namespace Api.Tests
 {
@@ -23,18 +26,9 @@ namespace Api.Tests
     {
         public UserControllerUnitTests()
         {
-            List<User> users = new List<User>();
-            var user = new User()
-            {
-                Id = 1,
-                Weight = 1,
-            };
-            users.Add(user);
 
-            _userService = new MockUserService(users);
         }
 
-        private IUserService _userService { get; set; }
 
         private enum UserAuthorizationHandlerMode
         {
@@ -117,14 +111,15 @@ namespace Api.Tests
         {
 
             //Arrange
-            UserController controller = CreateDefaultTestController(_userService);
+            var userServiceMock = new Mock<IUserService>();
+            userServiceMock.Setup(x => x.GetUserById(1)).ReturnsAsync(new User());
+            UserController controller = CreateDefaultTestController(userServiceMock.Object);
 
             //Act
             ActionResult<User> result = await controller.Get(1);
 
             //Assert
             Assert.IsType<User>(result.Value);
-
         }
 
 
@@ -133,7 +128,9 @@ namespace Api.Tests
         {
 
             //Arrange
-            UserController controller = CreateDefaultTestController(_userService);
+            var userServiceMock = new Mock<IUserService>();
+            userServiceMock.Setup(x => x.GetUserById(1)).ReturnsAsync((User)null);
+            UserController controller = CreateDefaultTestController(userServiceMock.Object);
 
             //Act
             ActionResult<User> result = await controller.Get(2);
@@ -148,13 +145,14 @@ namespace Api.Tests
         public async void TestDeleteEndpointWithExistingID()
         {
             //Arrange
-            UserController controller = CreateDefaultTestController(_userService);
+            var userServiceMock = new Mock<IUserService>();
+            userServiceMock.Setup(x => x.RemoveUserById(1)).ReturnsAsync(new SuccessServiceResult());
+            UserController controller = CreateDefaultTestController(userServiceMock.Object);
 
             //Act
             var result = await controller.Delete(1);
 
             //Assert
-            Assert.Null(await _userService.GetUserById(1));
             Assert.IsType<OkResult>(result);
         }
 
@@ -162,12 +160,13 @@ namespace Api.Tests
         [Fact]
         public async void TestDeleteEndpointWithNonExistingID()
         {
-
             //Arrange
-            UserController controller = CreateDefaultTestController(_userService);
+            var userServiceMock = new Mock<IUserService>();
+            userServiceMock.Setup(x => x.RemoveUserById(1)).ReturnsAsync(new NotFoundServiceResult("Not Found"));
+            UserController controller = CreateDefaultTestController(userServiceMock.Object);
 
             //Act
-            var result = await controller.Delete(2);
+            var result = await controller.Delete(1);
 
             //Assert
             Assert.IsType<NotFoundObjectResult>(result);
@@ -179,19 +178,19 @@ namespace Api.Tests
         {
 
             //Arrange
-            UserController controller = CreateDefaultTestController(_userService);
+            var user = new User();
+            var mockPayload = new Mock<IUserPayload>();
+            mockPayload.Setup(x => x.CreateModel()).Returns(user);
+
+            var userServiceMock = new Mock<IUserService>();
+            userServiceMock.Setup(x => x.UpdateUser(user)).ReturnsAsync(new SuccessServiceResult());
+            UserController controller = CreateDefaultTestController(userServiceMock.Object);
 
             //Act
-            var result = await controller.Put(new Payloads.UserPayload()
-            {
-                Id = 1,
-                Weight = 10
-            });
+            var result = await controller.Put(mockPayload.Object);
 
             //Assert
-            var result_service = await _userService.GetUserById(1);
             Assert.IsType<OkResult>(result);
-            Assert.Equal(10, result_service.Weight);
         }
 
 
@@ -200,41 +199,42 @@ namespace Api.Tests
         {
 
             //Arrange
-            UserController controller = CreateDefaultTestController(_userService);
+            var user = new User();
+            var mockPayload = new Mock<IUserPayload>();
+            mockPayload.Setup(x => x.CreateModel()).Returns(user);
+
+            var userServiceMock = new Mock<IUserService>();
+            userServiceMock.Setup(x => x.UpdateUser(user)).ReturnsAsync(new NotFoundServiceResult("Not found"));
+            UserController controller = CreateDefaultTestController(userServiceMock.Object);
 
             //Act
-            var result = await controller.Put(new Payloads.UserPayload()
-            {
-                Id = 2,
-                Weight = 10
-            });
+            var result = await controller.Put(mockPayload.Object);
 
             //Assert
-            var contextResult = await _userService.GetUserById(1);
             Assert.IsType<NotFoundObjectResult>(result);
-            Assert.Equal(1, contextResult.Weight);
         }
 
         [Fact]
         public async void TestGetUnauthorized()
         {
             //Arrange
-            UserController controller = CreateDefaultTestController(_userService, UserAuthorizationHandlerMode.FAIL);
+            var userServiceMock = new Mock<IUserService>();
+            userServiceMock.Setup(x => x.GetUserById(1)).ReturnsAsync(new User());
+            UserController controller = CreateDefaultTestController(userServiceMock.Object, UserAuthorizationHandlerMode.FAIL);
 
             //Act
             var result = await controller.Get(1);
 
             //Assert
             Assert.IsType<UnauthorizedResult>(result.Result);
-            Assert.Null(result.Value);
-
         }
 
         [Fact]
         public async void TestUpdateUnauthorized()
         {
             //Arrange
-            UserController controller = CreateDefaultTestController(_userService, UserAuthorizationHandlerMode.FAIL);
+            var userService = Mock.Of<IUserService>();
+            UserController controller = CreateDefaultTestController(userService, UserAuthorizationHandlerMode.FAIL);
 
             //Act
             var result = await controller.Put(new Payloads.UserPayload()
@@ -244,9 +244,7 @@ namespace Api.Tests
             });
 
             //Assert
-            var contextResult = await _userService.GetUserById(1);
             Assert.IsType<UnauthorizedResult>(result);
-            Assert.Equal(1, contextResult.Weight);
         }
 
         [Fact]
@@ -254,13 +252,14 @@ namespace Api.Tests
         {
 
             //Arrange
-            UserController controller = CreateDefaultTestController(_userService, UserAuthorizationHandlerMode.FAIL);
+            var userService = Mock.Of<IUserService>();
+            UserController controller = CreateDefaultTestController(userService, UserAuthorizationHandlerMode.FAIL);
+
             //Act
             var result = await controller.Delete(1);
+
             //Assert
-            var contextResult = await _userService.GetUserById(1);
             Assert.IsType<UnauthorizedResult>(result);
-            Assert.NotNull(contextResult);
         }
     }
 }

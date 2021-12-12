@@ -33,7 +33,7 @@ namespace Api.Controllers
         [HttpGet("user/{userId}")]
         public async Task<ActionResult<List<RunGetPayload>>> GetUserRuns(int userId, long? timestamp = null)
         {
-            
+
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, userId, "CheckUserIDResourceAccess");
 
@@ -101,7 +101,7 @@ namespace Api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post(RunCreatePayload payload)
+        public async Task<ActionResult> Post(IRunCreatePayload payload)
         {
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, payload.UserId, "CheckUserIDResourceAccess");
@@ -120,7 +120,7 @@ namespace Api.Controllers
         }
 
         [HttpPut]
-        public async Task<ActionResult> Put(RunUpdatePayload payload)
+        public async Task<ActionResult> Put(IRunUpdatePayload payload)
         {
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, payload.UserId, "CheckUserIDResourceAccess");

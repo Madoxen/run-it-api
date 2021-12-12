@@ -3,7 +3,15 @@ using Api.Models;
 
 namespace Api.Payloads
 {
-    public class RouteUpdatePayload : IModelPayload<Route>
+    public interface IRouteUpdatePayload : IModelPayload<Route>
+    {
+        int Id { get; set; }
+        int UserId { get; set; }
+        string Title { get; set; }
+        string Subtitle { get; set; }
+        MapPoint[] Points { get; set; }
+    }
+    public class RouteUpdatePayload : IRouteUpdatePayload
     {
         public int Id { get; set; }
         public int UserId { get; set; }

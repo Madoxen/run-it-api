@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using Api.Services;
 using Api.Tests.Mocks;
+using Moq;
 
 namespace Api.Testss
 {
@@ -20,18 +21,7 @@ namespace Api.Testss
     {
         public AuthControllerUnitTests()
         {
-            User u = new User()
-            {
-                Id = 1
-            };
-            List<User> users = new List<User>();
-            users.Add(u);
-            _userService = new MockUserService(users);
-            _userAuthService = new MockUserAuthService(users);
         }
-
-        private IUserService _userService { get; set; }
-        private IUserAuthService _userAuthService { get; set; }
 
         private enum UserAuthorizationHandlerMode
         {
@@ -70,7 +60,10 @@ namespace Api.Testss
                 }
             };
 
-            AuthController controller = new AuthController(_userAuthService, _userService, null, options);
+
+            var userAuthService = Mock.Of<IUserAuthService>();
+            var userService = Mock.Of<IUserService>();
+            AuthController controller = new AuthController(userAuthService, userService, null, options);
             controller.ControllerContext = controllerContext;
 
             //Act
