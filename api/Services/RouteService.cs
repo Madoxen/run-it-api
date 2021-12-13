@@ -26,6 +26,9 @@ namespace Api.Services
 
         public async Task<ServiceResult> CreateRoute(Route route)
         {
+            if (await _context.Users.FirstOrDefaultAsync(x => x.Id == route.UserId) == null)
+                return NotFound("Cannot create route for non existing user");
+
             _context.Routes.Add(route);
             await _context.SaveChangesAsync();
             return Success();
@@ -48,9 +51,15 @@ namespace Api.Services
             return user.Routes;
         }
 
-        public async Task<ServiceResult> RemoveRoute(Route u)
+        public async Task<ServiceResult> RemoveRoute(Route route)
         {
-            _context.Routes.Remove(u);
+            var check = await _context.Routes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == route.Id);
+            if (check == null)
+                return NotFound("Route not found");
+
+            _context.Routes.Remove(route);
             await _context.SaveChangesAsync();
             return Success();
         }
@@ -59,18 +68,29 @@ namespace Api.Services
         {
             Route route = await _context.Routes.FindAsync(id);
             if (route == null)
-                return NotFound("User not found");
+                return NotFound("Route not found");
+
             _context.Routes.Remove(route);
             await _context.SaveChangesAsync();
             return Success();
         }
 
-        public async Task<ServiceResult> UpdateRoute(Route u)
+        public async Task<ServiceResult> UpdateRoute(Route route)
         {
-            Route user = await _context.Routes.FindAsync(u.Id);
-            if (user == null)
-                return NotFound("User not found");
-            _context.Routes.Update(user);
+            var check = _context.Routes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == route.Id);
+
+            var userCheck = _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == route.UserId);
+
+            if (await check == null)
+                return NotFound("Route not found");
+            if (await userCheck == null)
+                return NotFound("Cannot update route with non existing user as a owner");
+
+            _context.Routes.Update(route);
             await _context.SaveChangesAsync();
             return Success();
         }

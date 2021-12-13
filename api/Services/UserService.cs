@@ -1,6 +1,8 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Api.Models;
 using Api.Utils;
+using Microsoft.EntityFrameworkCore;
 
 namespace Api.Services
 {
@@ -39,6 +41,12 @@ namespace Api.Services
 
         public async Task<ServiceResult> RemoveUser(User user)
         {
+            User u = await _context.Users.
+            AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == user.Id);
+            if (u == null)
+                return NotFound("User not found");
+
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
             return Success();
@@ -46,10 +54,12 @@ namespace Api.Services
 
         public async Task<ServiceResult> UpdateUser(User u)
         {
-            User user = await _context.Users.FindAsync(u.Id);
+            User user = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == u.Id);
             if (user == null)
                 return NotFound("User not found");
-            _context.Users.Update(user);
+            _context.Users.Update(u);
             await _context.SaveChangesAsync();
             return Success();
         }

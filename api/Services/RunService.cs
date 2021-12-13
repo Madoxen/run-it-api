@@ -28,6 +28,8 @@ namespace Api.Services
 
         public async Task<ServiceResult> CreateRun(Run run)
         {
+            if (await _context.Users.FirstOrDefaultAsync(x => x.Id == run.UserId) == null)
+                return NotFound("Cannot create run for non existing user");
             _context.Runs.Add(run);
             await _context.SaveChangesAsync();
             return Success();
@@ -52,9 +54,13 @@ namespace Api.Services
             return user.Runs.FindAll(x => x.Date >= from);
         }
 
-        public async Task<ServiceResult> RemoveRun(Run u)
+        public async Task<ServiceResult> RemoveRun(Run run)
         {
-            _context.Runs.Remove(u);
+            var runQueryResult = await _context.Runs.FirstOrDefaultAsync(x => x.Id == run.Id);
+            if (runQueryResult == null)
+                return NotFound("Run not found");
+
+            _context.Runs.Remove(runQueryResult);
             await _context.SaveChangesAsync();
             return Success();
         }
@@ -63,18 +69,29 @@ namespace Api.Services
         {
             Run run = await _context.Runs.FindAsync(id);
             if (run == null)
-                return NotFound("User not found");
+                return NotFound("Run not found");
+
             _context.Runs.Remove(run);
             await _context.SaveChangesAsync();
             return Success();
         }
 
-        public async Task<ServiceResult> UpdateRun(Run u)
+        public async Task<ServiceResult> UpdateRun(Run run)
         {
-            Run user = await _context.Runs.FindAsync(u.Id);
-            if (user == null)
-                return NotFound("User not found");
-            _context.Runs.Update(user);
+            var check = _context.Runs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == run.Id);
+
+            var userCheck = _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == run.UserId);
+
+            if (await check == null)
+                return NotFound("Run not found");
+            if (await userCheck == null)
+                return NotFound("Cannot update run with non existing user as a owner");
+
+            _context.Runs.Update(run);
             await _context.SaveChangesAsync();
             return Success();
         }
