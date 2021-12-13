@@ -3,7 +3,16 @@ using Api.Models;
 
 namespace Api.Payloads
 {
-    public class RunUpdatePayload : IModelPayload<Run>
+    public interface IRunUpdatePayload : IModelPayload<Run>
+    {
+        int Id { get; set; }
+        int UserId { get; set; }
+        string Title { get; set; }
+        string Subtitle { get; set; }
+        uint Duration { get; set; } //in seconds
+        MapPoint[] Points { get; set; }
+    }
+    public class RunUpdatePayload : IRunUpdatePayload
     {
         public int Id { get; set; }
         public int UserId { get; set; }

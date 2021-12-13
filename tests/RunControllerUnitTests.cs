@@ -17,6 +17,8 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using Api.Services;
 using Api.Payloads;
+using Moq;
+using Api.Utils;
 
 namespace Api.Tests
 {
@@ -24,27 +26,7 @@ namespace Api.Tests
     {
         public RunControllerUnitTests()
         {
-            List<Run> runs = new List<Run>();
-            var run = new Run()
-            {
-                Id = 1,
-                UserId = 1
-            };
-            runs.Add(run);
-
-            List<User> users = new List<User>();
-            var user = new User()
-            {
-                Id = 1,
-                Weight = 1,
-                Runs = runs
-            };
-            users.Add(user);
-
-            _runService = new MockRunService(runs, users);
         }
-
-        private IRunService _runService { get; set; }
 
         private enum UserAuthorizationHandlerMode
         {
@@ -134,42 +116,42 @@ namespace Api.Tests
         [Fact]
         public async void TestGetUserRunsEndpointWithExistingID()
         {
-
             //Arrange
-            RunController controller = CreateDefaultTestController(_runService);
+            var runServiceMock = new Mock<IRunService>();
+            runServiceMock.Setup(x => x.GetUserRuns(1, null)).ReturnsAsync(new List<Run>());
+            RunController controller = CreateDefaultTestController(runServiceMock.Object);
 
             //Act
             ActionResult<List<RunGetPayload>> result = await controller.GetUserRuns(1);
 
             //Assert
             Assert.IsType<List<RunGetPayload>>(result.Value);
-
         }
 
 
         [Fact]
         public async void TestGetUserRunsEndpointWithNonExistingID()
         {
-
             //Arrange
-            RunController controller = CreateDefaultTestController(_runService);
+            var runServiceMock = new Mock<IRunService>();
+            runServiceMock.Setup(x => x.GetUserRuns(1, null)).ReturnsAsync(new NotFoundServiceResult("Not Found"));
+            RunController controller = CreateDefaultTestController(runServiceMock.Object);
 
             //Act
-            ActionResult<List<RunGetPayload>> result = await controller.GetUserRuns(2);
+            ActionResult<List<RunGetPayload>> result = await controller.GetUserRuns(1);
 
             //Assert
             Assert.IsType<NotFoundObjectResult>(result.Result);
-            Assert.Null(result.Value);
-
         }
 
 
         [Fact]
         public async void TestGetRunEndpointWithExistingID()
         {
-
             //Arrange
-            RunController controller = CreateDefaultTestController(_runService);
+            var runServiceMock = new Mock<IRunService>();
+            runServiceMock.Setup(x => x.GetRunById(1)).ReturnsAsync(new Run());
+            RunController controller = CreateDefaultTestController(runServiceMock.Object);
 
             //Act
             ActionResult<RunGetPayload> result = await controller.GetRun(1);
@@ -182,17 +164,16 @@ namespace Api.Tests
         [Fact]
         public async void TestGetRunEndpointWithNonExistingID()
         {
-
             //Arrange
-            RunController controller = CreateDefaultTestController(_runService);
+            var runServiceMock = new Mock<IRunService>();
+            runServiceMock.Setup(x => x.GetRunById(1)).ReturnsAsync((Run)null);
+            RunController controller = CreateDefaultTestController(runServiceMock.Object);
 
             //Act
-            ActionResult<RunGetPayload> result = await controller.GetRun(2);
+            ActionResult<RunGetPayload> result = await controller.GetRun(1);
 
             //Assert
             Assert.IsType<NotFoundObjectResult>(result.Result);
-            Assert.Null(result.Value);
-
         }
 
 
@@ -201,108 +182,112 @@ namespace Api.Tests
         public async void TestDeleteEndpointWithExistingID()
         {
             //Arrange
-            RunController controller = CreateDefaultTestController(_runService);
+            var run = new Run();
+            var runServiceMock = new Mock<IRunService>();
+            runServiceMock.Setup(x => x.GetRunById(1)).ReturnsAsync(run);
+            runServiceMock.Setup(x => x.RemoveRun(run)).ReturnsAsync(new SuccessServiceResult());
+            RunController controller = CreateDefaultTestController(runServiceMock.Object);
 
             //Act
             var result = await controller.Delete(1);
 
             //Assert
             Assert.IsType<OkResult>(result);
-            Assert.Null(await _runService.GetRunById(1));
         }
 
 
         [Fact]
         public async void TestDeleteEndpointWithNonExistingID()
         {
-
             //Arrange
-            RunController controller = CreateDefaultTestController(_runService);
+            var run = new Run();
+            var runServiceMock = new Mock<IRunService>();
+            runServiceMock.Setup(x => x.GetRunById(1)).ReturnsAsync((Run)null);
+            RunController controller = CreateDefaultTestController(runServiceMock.Object);
 
             //Act
-            var result = await controller.Delete(2);
+            var result = await controller.Delete(1);
 
             //Assert
             Assert.IsType<NotFoundObjectResult>(result);
-
         }
 
         [Fact]
         public async void TestUpdateEndpointWithExistingID()
         {
-
             //Arrange
-            RunController controller = CreateDefaultTestController(_runService);
+            var run = new Run();
+            var mockPayload = new Mock<IRunUpdatePayload>();
+            mockPayload.Setup(x => x.CreateModel()).Returns(run);
+
+            var runService = new Mock<IRunService>();
+            runService.Setup(x => x.GetRunById(1)).ReturnsAsync(run);
+            runService.Setup(x => x.UpdateRun(run)).ReturnsAsync(new SuccessServiceResult());
+            RunController controller = CreateDefaultTestController(runService.Object);
 
             //Act
-            var result = await controller.Put(new Payloads.RunUpdatePayload()
-            {
-                Id = 1,
-                Duration = 1
-            });
+            var result = await controller.Put(mockPayload.Object);
 
             //Assert
-            var result_service = await _runService.GetRunById(1);
             Assert.IsType<OkResult>(result);
-            Assert.Equal(1u, result_service.Duration);
         }
 
 
         [Fact]
         public async void TestUpdateEndpointWithNonExistingID()
         {
-
             //Arrange
-            RunController controller = CreateDefaultTestController(_runService);
+            var run = new Run();
+            var mockPayload = new Mock<IRunUpdatePayload>();
+            mockPayload.Setup(x => x.CreateModel()).Returns(run);
+
+            var runService = new Mock<IRunService>();
+            runService.Setup(x => x.GetRunById(1)).ReturnsAsync(run);
+            runService.Setup(x => x.UpdateRun(run)).ReturnsAsync(new NotFoundServiceResult("Not found"));
+            RunController controller = CreateDefaultTestController(runService.Object);
 
             //Act
-            var result = await controller.Put(new Payloads.RunUpdatePayload()
-            {
-                Id = 2,
-                Duration = 1
-            });
+            var result = await controller.Put(mockPayload.Object);
 
             //Assert
-            var contextResult = await _runService.GetRunById(1);
             Assert.IsType<NotFoundObjectResult>(result);
-            Assert.Equal(0u, contextResult.Duration);
         }
 
         [Fact]
         public async void TestGetUserRunsUnauthorized()
         {
             //Arrange
-            RunController controller = CreateDefaultTestController(_runService, UserAuthorizationHandlerMode.FAIL);
+            var runService = Mock.Of<IRunService>();
+            RunController controller = CreateDefaultTestController(runService, UserAuthorizationHandlerMode.FAIL);
 
             //Act
             var result = await controller.GetUserRuns(1);
 
             //Assert
             Assert.IsType<UnauthorizedResult>(result.Result);
-            Assert.Null(result.Value);
-
         }
 
         [Fact]
         public async void TestGetUnauthorized()
         {
             //Arrange
-            RunController controller = CreateDefaultTestController(_runService, UserAuthorizationHandlerMode.FAIL);
+            var runServiceMock = new Mock<IRunService>();
+            runServiceMock.Setup(x => x.GetRunById(1)).ReturnsAsync(new Run());
+            RunController controller = CreateDefaultTestController(runServiceMock.Object, UserAuthorizationHandlerMode.FAIL);
 
             //Act
             var result = await controller.GetRun(1);
 
             //Assert
             Assert.IsType<UnauthorizedResult>(result.Result);
-            Assert.Null(result.Value);
-
         }
 
         [Fact]
         public async void TestUpdateUnauthorized()
         {
             //Arrange
-            RunController controller = CreateDefaultTestController(_runService, UserAuthorizationHandlerMode.FAIL);
+            var runService = Mock.Of<IRunService>();
+            RunController controller = CreateDefaultTestController(runService, UserAuthorizationHandlerMode.FAIL);
 
             //Act
             var result = await controller.Put(new Payloads.RunUpdatePayload()
@@ -312,9 +297,7 @@ namespace Api.Tests
             });
 
             //Assert
-            var contextResult = await _runService.GetRunById(1);
             Assert.IsType<UnauthorizedResult>(result);
-            Assert.Equal(0u, contextResult.Duration);
         }
 
         [Fact]
@@ -322,13 +305,13 @@ namespace Api.Tests
         {
 
             //Arrange
-            RunController controller = CreateDefaultTestController(_runService, UserAuthorizationHandlerMode.FAIL);
+            var runServiceMock = new Mock<IRunService>();
+            runServiceMock.Setup(x => x.GetRunById(1)).ReturnsAsync(new Run());
+            RunController controller = CreateDefaultTestController(runServiceMock.Object, UserAuthorizationHandlerMode.FAIL);
             //Act
             var result = await controller.Delete(1);
             //Assert
-            var contextResult = await _runService.GetRunById(1);
             Assert.IsType<UnauthorizedResult>(result);
-            Assert.NotNull(contextResult);
         }
     }
 }

@@ -13,10 +13,10 @@ namespace Api.Services
 
     }
 
-    public class UserAuthService : ServiceBase, IUserAuthService
+    public class AuthUserService : ServiceBase, IUserAuthService
     {
         public readonly ApiContext _context;
-        public UserAuthService(ApiContext context)
+        public AuthUserService(ApiContext context)
         {
             _context = context;
         }

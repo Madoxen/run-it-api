@@ -19,13 +19,11 @@ namespace Api.Controllers
     public class FriendsController : ControllerBase
     {
         private readonly IFriendService _friendService;
-        private readonly IUserService _userService;
         private readonly IAuthorizationService _authorizationService;
 
-        public FriendsController(IFriendService friendService, IUserService userService, IAuthorizationService authorizationService)
+        public FriendsController(IFriendService friendService, IAuthorizationService authorizationService)
         {
             _friendService = friendService;
-            _userService = userService;
             _authorizationService = authorizationService;
         }
 
@@ -49,7 +47,7 @@ namespace Api.Controllers
             }
         }
 
-         //Gets user profile information
+        //Gets user profile information
         [HttpGet("requests/{userId}")]
         public async Task<ActionResult<List<FriendPayload>>> GetFriendRequests(int userId)
         {

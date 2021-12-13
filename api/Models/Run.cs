@@ -10,6 +10,7 @@ namespace Api.Models
     //Singular training
     public class Run : IEntity
     {
+        //TODO: Make Id and UserId required for this model
         public Run() { }
 
         [Key]

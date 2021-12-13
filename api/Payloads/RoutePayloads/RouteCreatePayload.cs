@@ -3,7 +3,13 @@ using Api.Models;
 
 namespace Api.Payloads
 {
-    public class RouteCreatePayload : IModelPayload<Route>
+    public interface IRouteCreatePayload : IModelPayload<Route> {
+        int UserId { get; set; }
+        string Title { get; set; }
+        string Subtitle { get; set; }
+        MapPoint[] Points { get; set; }
+    }
+    public class RouteCreatePayload : IRouteCreatePayload
     {
         public int UserId { get; set; }
         public string Title { get; set; }

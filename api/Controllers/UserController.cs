@@ -50,7 +50,6 @@ namespace Api.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
-
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, id, "CheckUserIDResourceAccess");
 
@@ -67,9 +66,8 @@ namespace Api.Controllers
 
 
         [HttpPut]
-        public async Task<ActionResult> Put(UserPayload payload)
+        public async Task<ActionResult> Put(IUserPayload payload)
         {
-
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, payload.Id, "CheckUserIDResourceAccess");
 
