@@ -25,4 +25,32 @@ public static class DistanceCalculator
 
         return Math.Atan(angle) * EARTH_RADIUS;
     }
+
+    public static readonly double EarthRadius = 6378.1; //#Radius of the Earth km
+    public static MapPoint GetPointByDistanceAndHeading(MapPoint origin, double heading, double distanceKm)
+    {
+        double bearingR = heading;
+        double latR = origin.Latitude.ToRadians();
+        double lonR = origin.Longitude.ToRadians();
+
+        double distanceToRadius = distanceKm / EarthRadius;
+
+        double newLatR = Math.Asin(Math.Sin(latR) * Math.Cos(distanceToRadius)
+        + Math.Cos(latR) * Math.Sin(distanceToRadius) * Math.Cos(bearingR));
+
+        double newLonR = lonR + Math.Atan2(
+        Math.Sin(bearingR) * Math.Sin(distanceToRadius) * Math.Cos(latR),
+        Math.Cos(distanceToRadius) - Math.Sin(latR) * Math.Sin(newLatR));
+
+        return new MapPoint(newLonR.ToDegrees(), newLatR.ToDegrees());
+    }
+
+    public static double ToRadians(this double degrees)
+    {
+        return (Math.PI / 180.0) * degrees;
+    }
+    public static double ToDegrees(this double radians)
+    {
+        return (180.0 / Math.PI) * radians;
+    }
 }
