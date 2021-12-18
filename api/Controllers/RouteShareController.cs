@@ -77,7 +77,7 @@ namespace Api.Controllers
 
         [HttpGet]
         [Route("{userId}")]
-        public async Task<ActionResult<List<RouteGetPayload>>> Get(int userId)
+        public async Task<ActionResult<List<RouteShareGetPayload>>> Get(int userId)
         {
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, userId, "CheckUserIDResourceAccess");
@@ -88,7 +88,7 @@ namespace Api.Controllers
                 if (result.Value == null)
                     return (ActionResult)result.Result;
                 var list = result.Value;
-                return list.Select(x => new RouteGetPayload(x)).ToList();
+                return list.Select(x => new RouteShareGetPayload(x)).ToList();
             }
             else
             {

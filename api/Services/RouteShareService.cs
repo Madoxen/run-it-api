@@ -11,7 +11,7 @@ namespace Api.Services
     {
         Task<ServiceResult> ShareRouteWith(int routeId, int shareToId);
         Task<ServiceResult> RemoveShare(int routeId, int shareToId);
-        Task<ServiceResult<List<Route>>> GetSharesForUser(int userId);
+        Task<ServiceResult<List<RouteShare>>> GetSharesForUser(int userId);
     }
     public class RouteShareService : ServiceBase, IRouteShareService
     {
@@ -55,7 +55,7 @@ namespace Api.Services
             return Success();
         }
 
-        public async Task<ServiceResult<List<Route>>> GetSharesForUser(int userId)
+        public async Task<ServiceResult<List<RouteShare>>> GetSharesForUser(int userId)
         {
             var userCheck = await _context.Users.AsNoTracking()
                                                 .FirstOrDefaultAsync(x => x.Id == userId);
@@ -64,9 +64,11 @@ namespace Api.Services
                 return NotFound("User not found");
 
             return _context.RouteShares.AsNoTracking()
-                                       .Where(x => x.SharedToId == userId)
-                                       .Select(x => x.Route)
-                                       .ToList();
+                .Include(x => x.Route)
+                .ThenInclude(x => x.User)
+                .Include(x => x.SharedTo)
+                .Where(x => x.SharedToId == userId)
+                .ToList();
         }
     }
 

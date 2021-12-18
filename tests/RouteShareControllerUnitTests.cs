@@ -122,16 +122,16 @@ namespace Api.Tests
             //Arrange
             var routeService = new Mock<IRouteService>();
             var routeShareService = new Mock<IRouteShareService>();
-            routeShareService.Setup(x => x.GetSharesForUser(1)).ReturnsAsync(new List<Route>());
+            routeShareService.Setup(x => x.GetSharesForUser(1)).ReturnsAsync(new List<RouteShare>());
             RouteShareController controller = CreateDefaultTestController(
                 routeService.Object,
                 routeShareService.Object);
 
             //Act
-            ActionResult<List<RouteGetPayload>> result = await controller.Get(1);
+            ActionResult<List<RouteShareGetPayload>> result = await controller.Get(1);
 
             //Assert
-            Assert.IsType<List<RouteGetPayload>>(result.Value);
+            Assert.IsType<List<RouteShareGetPayload>>(result.Value);
         }
 
 
@@ -141,16 +141,16 @@ namespace Api.Tests
             //Arrange
             var routeService = new Mock<IRouteService>();
             var routeShareService = new Mock<IRouteShareService>();
-            routeShareService.Setup(x => x.GetSharesForUser(1)).ReturnsAsync(new List<Route>());
+            routeShareService.Setup(x => x.GetSharesForUser(1)).ReturnsAsync(new List<RouteShare>());
             RouteShareController controller = CreateDefaultTestController(
                 routeService.Object,
                 routeShareService.Object);
 
             //Act
-            ActionResult<List<RouteGetPayload>> result = await controller.Get(1);
+            ActionResult<List<RouteShareGetPayload>> result = await controller.Get(1);
 
             //Assert
-            Assert.IsType<List<RouteGetPayload>>(result.Value);
+            Assert.IsType<List<RouteShareGetPayload>>(result.Value);
         }
 
 
