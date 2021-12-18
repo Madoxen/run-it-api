@@ -130,6 +130,7 @@ namespace Api
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRunService, RunService>();
             services.AddScoped<IRouteService, RouteService>();
+            services.AddScoped<IRouteShareService, RouteShareService>();
             services.AddScoped<IFriendService, FriendService>();
 
             services.AddHttpClient();
