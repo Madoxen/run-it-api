@@ -101,7 +101,7 @@ namespace Api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post(IRunCreatePayload payload)
+        public async Task<ActionResult> Post(RunCreatePayload payload)
         {
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, payload.UserId, "CheckUserIDResourceAccess");
@@ -120,7 +120,7 @@ namespace Api.Controllers
         }
 
         [HttpPut]
-        public async Task<ActionResult> Put(IRunUpdatePayload payload)
+        public async Task<ActionResult> Put(RunUpdatePayload payload)
         {
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, payload.UserId, "CheckUserIDResourceAccess");

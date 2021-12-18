@@ -15,7 +15,7 @@ namespace Api.Payloads
             LastName = model.LastName;
         }
 
-        public User CreateModel()
+        public virtual User CreateModel()
         {
             throw new System.NotImplementedException();
         }

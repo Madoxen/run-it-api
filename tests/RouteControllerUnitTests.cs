@@ -237,7 +237,7 @@ namespace Api.Tests
 
             //Arrange
             var route = new Route();
-            var mockPayload = new Mock<IRouteUpdatePayload>();
+            var mockPayload = new Mock<RouteUpdatePayload>();
             mockPayload.Setup(x => x.CreateModel()).Returns(route);
 
             var routeService = new Mock<IRouteService>();
@@ -258,7 +258,7 @@ namespace Api.Tests
         {
             //Arrange
             var route = new Route();
-            var mockPayload = new Mock<IRouteUpdatePayload>();
+            var mockPayload = new Mock<RouteUpdatePayload>();
             mockPayload.Setup(x => x.CreateModel()).Returns(route);
 
             var routeService = new Mock<IRouteService>();

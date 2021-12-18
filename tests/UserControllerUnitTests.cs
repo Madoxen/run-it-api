@@ -179,7 +179,7 @@ namespace Api.Tests
 
             //Arrange
             var user = new User();
-            var mockPayload = new Mock<IUserPayload>();
+            var mockPayload = new Mock<UserPayload>();
             mockPayload.Setup(x => x.CreateModel()).Returns(user);
 
             var userServiceMock = new Mock<IUserService>();
@@ -200,7 +200,7 @@ namespace Api.Tests
 
             //Arrange
             var user = new User();
-            var mockPayload = new Mock<IUserPayload>();
+            var mockPayload = new Mock<UserPayload>();
             mockPayload.Setup(x => x.CreateModel()).Returns(user);
 
             var userServiceMock = new Mock<IUserService>();

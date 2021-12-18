@@ -29,7 +29,7 @@ namespace Api.Payloads
             ElevationDelta = model.ElevationDelta;
         }
 
-        public Run CreateModel()
+        public virtual Run CreateModel()
         {
             return new Run()
             {

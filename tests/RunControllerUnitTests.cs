@@ -217,7 +217,7 @@ namespace Api.Tests
         {
             //Arrange
             var run = new Run();
-            var mockPayload = new Mock<IRunUpdatePayload>();
+            var mockPayload = new Mock<RunUpdatePayload>();
             mockPayload.Setup(x => x.CreateModel()).Returns(run);
 
             var runService = new Mock<IRunService>();
@@ -238,7 +238,7 @@ namespace Api.Tests
         {
             //Arrange
             var run = new Run();
-            var mockPayload = new Mock<IRunUpdatePayload>();
+            var mockPayload = new Mock<RunUpdatePayload>();
             mockPayload.Setup(x => x.CreateModel()).Returns(run);
 
             var runService = new Mock<IRunService>();

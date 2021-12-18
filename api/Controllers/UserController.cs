@@ -66,7 +66,7 @@ namespace Api.Controllers
 
 
         [HttpPut]
-        public async Task<ActionResult> Put(IUserPayload payload)
+        public async Task<ActionResult> Put(UserPayload payload)
         {
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, payload.Id, "CheckUserIDResourceAccess");
