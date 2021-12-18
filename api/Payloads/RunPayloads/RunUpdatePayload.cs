@@ -3,16 +3,7 @@ using Api.Models;
 
 namespace Api.Payloads
 {
-    public interface IRunUpdatePayload : IModelPayload<Run>
-    {
-        int Id { get; set; }
-        int UserId { get; set; }
-        string Title { get; set; }
-        string Subtitle { get; set; }
-        uint Duration { get; set; } //in seconds
-        MapPoint[] Points { get; set; }
-    }
-    public class RunUpdatePayload : IRunUpdatePayload
+    public class RunUpdatePayload : IModelPayload<Run>
     {
         public int Id { get; set; }
         public int UserId { get; set; }
@@ -21,7 +12,7 @@ namespace Api.Payloads
         public uint Duration { get; set; } //in seconds
         public MapPoint[] Points { get; set; } //points tuple vector --- (lat, long)
 
-        public Run CreateModel()
+        public virtual Run CreateModel()
         {
             return new Run()
             {

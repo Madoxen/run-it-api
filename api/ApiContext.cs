@@ -14,6 +14,7 @@ namespace Api
         public DbSet<Friend> Friends { get; set; }
         public DbSet<Run> Runs { get; set; }
         public DbSet<Route> Routes { get; set; }
+        public DbSet<RouteShare> RouteShares { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -29,6 +30,10 @@ namespace Api
                 .HasOne(f => f.Receiver)
                 .WithMany(u => u.ReverseFriends)
                 .HasForeignKey(f => f.ReceiverId);
+
+
+            modelBuilder.Entity<RouteShare>()
+            .HasKey(x => new { x.RouteId, x.SharedToId });
         }
 
     }

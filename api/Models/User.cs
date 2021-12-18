@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Models
@@ -24,6 +25,6 @@ namespace Api.Models
 
         public List<Friend> Friends { get; set; } //saved user routes 
         public List<Friend> ReverseFriends { get; set; } //saved user routes 
-        
+
     }
 }
