@@ -12,6 +12,7 @@ namespace Api.Services
         Task<ServiceResult> ShareRouteWith(int routeId, int shareToId);
         Task<ServiceResult> RemoveShare(int routeId, int shareToId);
         Task<ServiceResult<List<RouteShare>>> GetSharesForUser(int userId);
+        Task<ServiceResult<RouteShare>> GetRouteShare(int routeId, int userId);
     }
     public class RouteShareService : ServiceBase, IRouteShareService
     {

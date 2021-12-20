@@ -10,9 +10,9 @@ namespace Api.Handlers
     public class RouteResourceAuthorizationHandler :
         AuthorizationHandler<RouteUserOwnershipRequirement, Route>
     {
-        private readonly RouteShareService _shareService;
+        private readonly IRouteShareService _shareService;
 
-        public RouteResourceAuthorizationHandler(RouteShareService shareService)
+        public RouteResourceAuthorizationHandler(IRouteShareService shareService)
         {
             _shareService = shareService;
         }
