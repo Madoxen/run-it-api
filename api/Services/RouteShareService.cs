@@ -16,7 +16,7 @@ namespace Api.Services
     public class RouteShareService : ServiceBase, IRouteShareService
     {
 
-        public readonly ApiContext _context;
+        private readonly ApiContext _context;
         public RouteShareService(ApiContext context)
         {
             _context = context;
@@ -69,6 +69,19 @@ namespace Api.Services
                 .Include(x => x.SharedTo)
                 .Where(x => x.SharedToId == userId)
                 .ToList();
+        }
+
+
+        public async Task<ServiceResult<RouteShare>> GetRouteShare(int routeId, int userId)
+        {
+            var result = await _context.RouteShares.AsNoTracking()
+                .Include(x => x.Route)
+                .FirstOrDefaultAsync(x => x.RouteId == routeId && x.SharedToId == userId);
+
+            if (result == null)
+                return NotFound("Share not found");
+
+            return result;
         }
     }
 
