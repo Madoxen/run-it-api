@@ -3,7 +3,7 @@ using Api.Models;
 
 namespace Api.Payloads
 {
-    public class RouteGetPayload : IModelPayload<Route>
+    public class RouteGetPayload 
     {
         public int Id { get; set; }
         public int UserId { get; set; }
@@ -25,17 +25,6 @@ namespace Api.Payloads
             Points = model.Points;
             DistanceTotal = model.DistanceTotal;
             ElevationDelta = model.ElevationDelta;
-        }
-
-        public virtual Route CreateModel()
-        {
-            return new Route()
-            {
-                UserId = this.UserId,
-                Title = this.Title,
-                Subtitle = this.Subtitle,
-                Points = this.Points
-            };
         }
     }
 }

@@ -179,7 +179,7 @@ namespace Api.Tests
 
             //Arrange
             var user = new User();
-            var mockPayload = new Mock<UserPayload>();
+            var mockPayload = new Mock<UserUpdatePayload>();
             mockPayload.Setup(x => x.CreateModel()).Returns(user);
 
             var userServiceMock = new Mock<IUserService>();
@@ -200,7 +200,7 @@ namespace Api.Tests
 
             //Arrange
             var user = new User();
-            var mockPayload = new Mock<UserPayload>();
+            var mockPayload = new Mock<UserUpdatePayload>();
             mockPayload.Setup(x => x.CreateModel()).Returns(user);
 
             var userServiceMock = new Mock<IUserService>();
@@ -237,7 +237,7 @@ namespace Api.Tests
             UserController controller = CreateDefaultTestController(userService, UserAuthorizationHandlerMode.FAIL);
 
             //Act
-            var result = await controller.Put(new Payloads.UserPayload()
+            var result = await controller.Put(new Payloads.UserUpdatePayload()
             {
                 Id = 1,
                 Weight = 10

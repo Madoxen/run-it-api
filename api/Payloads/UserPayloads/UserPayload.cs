@@ -2,7 +2,7 @@ using Api.Models;
 
 namespace Api.Payloads
 {
-        public class UserPayload : IModelPayload<User>
+    public class UserUpdatePayload : IModelPayload<User>
     {
         public int Id { get; set; }
         public float? Weight { get; set; }

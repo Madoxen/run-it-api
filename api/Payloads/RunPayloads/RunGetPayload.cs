@@ -3,8 +3,9 @@ using Api.Models;
 
 namespace Api.Payloads
 {
-    public class RunGetPayload : IModelPayload<Run>
+    public class RunGetPayload
     {
+        public int Id { get; set; }
         public int UserId { get; set; }
         public string Title { get; set; }
         public string Subtitle { get; set; }
@@ -19,6 +20,7 @@ namespace Api.Payloads
 
         public RunGetPayload(Run model)
         {
+            Id = model.Id;
             UserId = model.UserId;
             Title = model.Title;
             Subtitle = model.Subtitle;
@@ -27,19 +29,6 @@ namespace Api.Payloads
             Points = model.Points;
             DistanceTotal = model.DistanceTotal;
             ElevationDelta = model.ElevationDelta;
-        }
-
-        public virtual Run CreateModel()
-        {
-            return new Run()
-            {
-                UserId = this.UserId,
-                Title = this.Title,
-                Subtitle = this.Subtitle,
-                Duration = this.Duration,
-                Date = this.Date,
-                Points = this.Points
-            };
         }
     }
 }
