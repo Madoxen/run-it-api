@@ -14,7 +14,7 @@ namespace Api.Services
         Task<ServiceResult> RemoveRouteById(int id);
         Task<ServiceResult> RemoveRoute(Route u);
         Task<ServiceResult> UpdateRoute(Route u);
-        Task<ServiceResult> CreateRoute(Route u);
+        Task<ServiceResult<Route>> CreateRoute(Route u);
     }
 
     public class RouteService : ServiceBase, IRouteService
@@ -25,14 +25,14 @@ namespace Api.Services
             _context = context;
         }
 
-        public async Task<ServiceResult> CreateRoute(Route route)
+        public async Task<ServiceResult<Route>> CreateRoute(Route route)
         {
             if (await _context.Users.FirstOrDefaultAsync(x => x.Id == route.UserId) == null)
                 return NotFound("Cannot create route for non existing user");
 
             _context.Routes.Add(route);
             await _context.SaveChangesAsync();
-            return Success();
+            return route;
         }
 
         public async Task<Route> GetRouteById(int id)

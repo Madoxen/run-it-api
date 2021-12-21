@@ -139,8 +139,8 @@ namespace Api.Tests
                 var result = await service.CreateRoute(new Route() { UserId = 1, Id = 2 });
 
                 //Assert
-                Assert.NotNull(result);
-                Assert.IsType<SuccessServiceResult>(result);
+                Assert.Null(result.Result);
+                Assert.IsType<Route>(result.Value);
             }
 
             //Assert
@@ -163,8 +163,8 @@ namespace Api.Tests
                 var result = await service.CreateRoute(new Route() { UserId = 2, Id = 2 });
 
                 //Assert
-                Assert.NotNull(result);
-                Assert.IsType<NotFoundServiceResult>(result);
+                Assert.IsType<NotFoundServiceResult>(result.Result);
+                Assert.Null(result.Value);
             }
         }
 

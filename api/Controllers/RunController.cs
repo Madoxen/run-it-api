@@ -101,7 +101,7 @@ namespace Api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post(RunCreatePayload payload)
+        public async Task<ActionResult<RunGetPayload>> Post(RunCreatePayload payload)
         {
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, payload.UserId, "CheckUserIDResourceAccess");
@@ -111,7 +111,9 @@ namespace Api.Controllers
                 Run run = payload.CreateModel();
                 run.Date = DateTimeOffset.UtcNow;
                 var result = await _runService.CreateRun(run);
-                return result;
+                if (result.Result != null)
+                    return (ActionResult)result.Result;
+                return new RunGetPayload(result.Value);
             }
             else
             {

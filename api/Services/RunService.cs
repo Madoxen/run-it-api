@@ -15,7 +15,7 @@ namespace Api.Services
         Task<ServiceResult> RemoveRunById(int id);
         Task<ServiceResult> RemoveRun(Run u);
         Task<ServiceResult> UpdateRun(Run u);
-        Task<ServiceResult> CreateRun(Run u);
+        Task<ServiceResult<Run>> CreateRun(Run u);
     }
 
     public class RunService : ServiceBase, IRunService
@@ -26,13 +26,13 @@ namespace Api.Services
             _context = context;
         }
 
-        public async Task<ServiceResult> CreateRun(Run run)
+        public async Task<ServiceResult<Run>> CreateRun(Run run)
         {
             if (await _context.Users.FirstOrDefaultAsync(x => x.Id == run.UserId) == null)
                 return NotFound("Cannot create run for non existing user");
-            _context.Runs.Add(run);
+            await _context.Runs.AddAsync(run);
             await _context.SaveChangesAsync();
-            return Success();
+            return run;
         }
 
         public async Task<Run> GetRunById(int id)

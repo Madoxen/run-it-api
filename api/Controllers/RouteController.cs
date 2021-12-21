@@ -95,7 +95,7 @@ namespace Api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post(RouteCreatePayload payload)
+        public async Task<ActionResult<RouteGetPayload>> Post(RouteCreatePayload payload)
         {
             var authorizationResult = await _authorizationService
                     .AuthorizeAsync(User, payload.UserId, "CheckUserIDResourceAccess");
@@ -104,7 +104,9 @@ namespace Api.Controllers
             {
                 Route route = payload.CreateModel();
                 var result = await _routeService.CreateRoute(route);
-                return result;
+                if (result.Result != null)
+                    return (ActionResult)result.Result;
+                return new RouteGetPayload(result.Value);
             }
             else
             {
