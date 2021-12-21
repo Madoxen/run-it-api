@@ -13,6 +13,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using Api.Payloads.Osrm;
+using Utils.Geography;
 
 namespace Api.Controllers
 {
@@ -33,7 +34,7 @@ namespace Api.Controllers
         [HttpGet]
         [Route("{longitude}&{latitude}&{length}")]
         [AllowAnonymous]
-        public async Task<ActionResult<MapPoint[]>> Get(double longitude, double latitude, double length)
+        public async Task<ActionResult<RoundtripPayload>> Get(double longitude, double latitude, double length)
         {
             var httpClient = _clientFactory.CreateClient();
             //GET /trip/v1/{profile}/{coordinates}?
@@ -73,9 +74,13 @@ namespace Api.Controllers
             var payload = await JsonSerializer.DeserializeAsync<TripPayload>(responseStream);
             if (payload.Trips.Count <= 0)
                 return NotFound("Could not find any matching route");
-            var result = payload.Trips[0].Geometry.Coordinates.Select(x => new MapPoint(x[0], x[1]));
+            var pointArray = payload.Trips[0].Geometry.Coordinates.Select(x => new MapPoint(x[0], x[1]));
 
-            return result.ToArray();
+            var result = new RoundtripPayload();
+            result.Points = pointArray.ToArray();
+            result.Distance = MapPointUtils.CalculateTotalDistance(result.Points);
+            result.ElevationDelta = MapPointUtils.CalculateElevationDelta(result.Points);
+            return result;
         }
 
 
