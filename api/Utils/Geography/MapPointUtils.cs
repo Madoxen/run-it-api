@@ -41,19 +41,12 @@ namespace Utils.Geography
         public static uint CalculateTotalDistance(MapPoint[] points)
         {
             double distanceTotal = 0;
-            uint heightMin = (uint)points[0].Height;
-            uint heightMax = (uint)points[0].Height;
 
             for (int i = 1; i < points.Length; i++)
             {
                 MapPoint A = points[i - 1];
                 MapPoint B = points[i];
                 distanceTotal += DistanceCalculator.CalculateDistance(A, B);
-
-                if (heightMax < B.Height)
-                    heightMax = (uint)B.Height;
-                if (heightMin > B.Height)
-                    heightMin = (uint)B.Height;
             }
 
             return (uint)distanceTotal;

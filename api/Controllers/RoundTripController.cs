@@ -87,12 +87,13 @@ namespace Api.Controllers
         //radius in km
         //angle in radius
         //resoulution in - n points
-        private MapPoint[] CreateCircleCoordinateArray(MapPoint startCoords, double trackLength)
+        private MapPoint[] CreateCircleCoordinateArray(MapPoint startCoords, double trackLength, int resolution = 4)
         {
-            double radius = trackLength / (2.0 * Math.PI); //track length is approx. a generated circle circumference
+            double wallLength = trackLength / resolution; //track length is approx. a generated circle circumference
+            double radius = Math.Sqrt((wallLength * wallLength) / (2 * (1 - Math.Cos(2 * Math.PI / resolution))));
             double rotation = 2.0 * Math.PI * _randomizer.NextDouble();
-            int resolution = 20; //TODO: calculate resolution based on radius
-            MapPoint[] result = new MapPoint[resolution];
+            //TODO: calculate resolution based on radius
+            MapPoint[] result = new MapPoint[resolution + 1];
             for (int i = 0; i < resolution; i++)
             {
                 double angle = 2.0 * Math.PI * ((double)i / (double)resolution); //current sampling angle in radians 
@@ -106,6 +107,7 @@ namespace Api.Controllers
                 p.Longitude = Math.Round(p.Longitude, 6);
                 result[i] = p;
             }
+            result[resolution] = result[0];
             return result;
         }
     }

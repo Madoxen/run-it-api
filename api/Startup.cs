@@ -123,9 +123,9 @@ namespace Api
                  });
             });
 
-            services.AddSingleton<IAuthorizationHandler, UserAuthorizationHandler>();
-            services.AddSingleton<IAuthorizationHandler, RunResourceAuthorizationHandler>();
-            services.AddSingleton<IAuthorizationHandler, RouteResourceAuthorizationHandler>();
+            services.AddScoped<IAuthorizationHandler, UserAuthorizationHandler>();
+            services.AddScoped<IAuthorizationHandler, RunResourceAuthorizationHandler>();
+            services.AddScoped<IAuthorizationHandler, RouteResourceAuthorizationHandler>();
             services.AddScoped<IUserAuthService, AuthUserService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRunService, RunService>();
