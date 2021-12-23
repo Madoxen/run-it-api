@@ -18,26 +18,29 @@ namespace Api.Controllers
     public class RouteShareController : ControllerBase
     {
         private readonly IRouteShareService _routeShareService;
+        private readonly IRouteService _routeService;
         private readonly IAuthorizationService _authorizationService;
 
         public RouteShareController(
             IRouteShareService routeShareService,
+            IRouteService routeService,
             IAuthorizationService authorizationService)
         {
             _routeShareService = routeShareService;
+            _routeService = routeService;
             _authorizationService = authorizationService;
         }
 
         [HttpPost]
         [Route("{routeId}/{shareId}")]
-        public async Task<ActionResult> Post(int routeId, int shareId)
+        public async Task<ActionResult> SendShare(int routeId, int shareId)
         {
-            RouteShare targetShare = await _routeShareService.GetRouteShare(routeId, shareId);
-            if (targetShare == null)
+            Route targetRoute = await _routeService.GetRouteById(routeId);
+            if (targetRoute == null)
                 return NotFound($"Route share {routeId} to {shareId} not found");
 
             var authorizationResult = await _authorizationService
-                    .AuthorizeAsync(User, targetShare, "CheckRouteShareUserIDResourceAccess");
+                    .AuthorizeAsync(User, targetRoute, "CheckRouteUserIDResourceAccess");
 
             if (authorizationResult.Succeeded)
             {
@@ -49,6 +52,29 @@ namespace Api.Controllers
                 return Unauthorized();
             }
         }
+
+        [HttpPost]
+        [Route("accept/{routeId}/{shareId}")]
+        public async Task<ActionResult> AcceptShare(int routeId, int shareId)
+        {
+            RouteShare targetShare = await _routeShareService.GetRouteShare(routeId, shareId);
+            if (targetShare == null)
+                return NotFound($"Route share {routeId} to {shareId} not found");
+
+            var authorizationResult = await _authorizationService
+                    .AuthorizeAsync(User, targetShare, "CheckRouteShareUserIDResourceAccess");
+
+            if (authorizationResult.Succeeded)
+            {
+                var result = await _routeShareService.AcceptShare(routeId, shareId);
+                return result;
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+
 
         [HttpDelete]
         [Route("{routeId}/{shareId}")]

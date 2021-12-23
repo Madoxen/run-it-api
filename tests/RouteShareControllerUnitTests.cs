@@ -75,6 +75,7 @@ namespace Api.Tests
                     {
                         options.AddPolicy("CheckUserIDResourceAccess", policy => policy.Requirements.Add(new SameUserIDRequirement()));
                         options.AddPolicy("CheckRouteShareUserIDResourceAccess", policy => policy.Requirements.Add(new RouteUserOwnershipRequirement()));
+                        options.AddPolicy("CheckRouteUserIDResourceAccess", policy => policy.Requirements.Add(new RouteUserOwnershipRequirement()));
                     });
                 });
             }
@@ -108,9 +109,10 @@ namespace Api.Tests
         }
 
         private RouteShareController CreateDefaultTestController(IRouteShareService routeShareService,
+                                                                IRouteService routeService,
                                                                  UserAuthorizationHandlerMode authMode = UserAuthorizationHandlerMode.SUCC)
         {
-            RouteShareController controller = new RouteShareController(routeShareService, ArrangeAuthService(handlerType: authMode));
+            RouteShareController controller = new RouteShareController(routeShareService, routeService, ArrangeAuthService(handlerType: authMode));
             controller.ControllerContext = ArrangeControllerContext();
             return controller;
         }
@@ -120,9 +122,10 @@ namespace Api.Tests
         {
             //Arrange
             var routeShareService = new Mock<IRouteShareService>();
+            var routeService = new Mock<IRouteService>();
             routeShareService.Setup(x => x.GetSharesForUser(1)).ReturnsAsync(new List<RouteShare>());
             RouteShareController controller = CreateDefaultTestController(
-                routeShareService.Object);
+                routeShareService.Object, routeService.Object);
 
             //Act
             ActionResult<List<RouteShareGetPayload>> result = await controller.Get(1);
@@ -137,9 +140,10 @@ namespace Api.Tests
         {
             //Arrange
             var routeShareService = new Mock<IRouteShareService>();
+            var routeService = new Mock<IRouteService>();
             routeShareService.Setup(x => x.GetSharesForUser(1)).ReturnsAsync(new List<RouteShare>());
             RouteShareController controller = CreateDefaultTestController(
-                routeShareService.Object);
+                routeShareService.Object, routeService.Object);
 
             //Act
             ActionResult<List<RouteShareGetPayload>> result = await controller.Get(1);
@@ -154,7 +158,8 @@ namespace Api.Tests
         {
             //Arrange
             var routeShareService = new Mock<IRouteShareService>();
-            RouteShareController controller = CreateDefaultTestController(routeShareService.Object, UserAuthorizationHandlerMode.FAIL);
+            var routeService = new Mock<IRouteService>();
+            RouteShareController controller = CreateDefaultTestController(routeShareService.Object, routeService.Object, UserAuthorizationHandlerMode.FAIL);
 
             //Act
             var result = await controller.Get(1);
@@ -164,15 +169,17 @@ namespace Api.Tests
         }
 
         [Fact]
-        public async void TestPostUnauthorized()
+        public async void TestSendShareUnauthorized()
         {
             //Arrange
             var routeShareService = new Mock<IRouteShareService>();
-            routeShareService.Setup(x=>x.GetRouteShare(1,1)).ReturnsAsync(new RouteShare());
-            RouteShareController controller = CreateDefaultTestController(routeShareService.Object, UserAuthorizationHandlerMode.FAIL);
+            var routeService = new Mock<IRouteService>();
+            routeService.Setup(x => x.GetRouteById(1)).ReturnsAsync(new Route());
+            routeShareService.Setup(x => x.GetRouteShare(1, 1)).ReturnsAsync(new RouteShare());
+            RouteShareController controller = CreateDefaultTestController(routeShareService.Object, routeService.Object, UserAuthorizationHandlerMode.FAIL);
 
             //Act
-            var result = await controller.Post(1, 1);
+            var result = await controller.SendShare(1, 1);
 
             //Assert
             Assert.IsType<UnauthorizedResult>(result);
@@ -184,8 +191,9 @@ namespace Api.Tests
 
             //Arrange
             var routeShareService = new Mock<IRouteShareService>();
-            routeShareService.Setup(x=>x.GetRouteShare(1,1)).ReturnsAsync(new RouteShare());
-            RouteShareController controller = CreateDefaultTestController(routeShareService.Object, UserAuthorizationHandlerMode.FAIL);
+            var routeService = new Mock<IRouteService>();
+            routeShareService.Setup(x => x.GetRouteShare(1, 1)).ReturnsAsync(new RouteShare());
+            RouteShareController controller = CreateDefaultTestController(routeShareService.Object, routeService.Object, UserAuthorizationHandlerMode.FAIL);
 
             //Act
             var result = await controller.Delete(1, 1);

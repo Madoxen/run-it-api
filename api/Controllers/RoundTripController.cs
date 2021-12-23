@@ -97,7 +97,6 @@ namespace Api.Controllers
             for (int i = 0; i < resolution; i++)
             {
                 double angle = 2.0 * Math.PI * ((double)i / (double)resolution); //current sampling angle in radians 
-
                 double x = radius * (Math.Cos(angle) + Math.Cos(rotation));
                 double y = radius * (Math.Sin(angle) + Math.Sin(rotation));
                 double heading = Math.Atan2(y, x);

@@ -10,6 +10,7 @@ namespace Api.Services
     public interface IRouteShareService
     {
         Task<ServiceResult> ShareRouteWith(int routeId, int shareToId);
+        Task<ServiceResult> AcceptShare(int routeId, int shareToId);
         Task<ServiceResult> RemoveShare(int routeId, int shareToId);
         Task<ServiceResult<List<RouteShare>>> GetSharesForUser(int userId);
         Task<RouteShare> GetRouteShare(int routeId, int userId);
@@ -39,20 +40,25 @@ namespace Api.Services
                 return NotFound("User not found");
 
             var shareCheck = await _context.RouteShares.FirstOrDefaultAsync(x => x.RouteId == routeId && x.SharedToId == shareToId);
-            if (shareCheck == null)
+            if (shareCheck != null)
+                return Conflict("RouteShare already exists");
+            await _context.RouteShares.AddAsync(new RouteShare()
             {
-                await _context.RouteShares.AddAsync(new RouteShare()
-                {
-                    RouteId = routeId,
-                    SharedToId = shareToId,
-                    Date = System.DateTimeOffset.UtcNow,
-                    Status = RouteShare.AcceptanceStatus.Sent
-                });
-            }
-            else
-            {
-                shareCheck.Status = RouteShare.AcceptanceStatus.Shared;
-            }
+                RouteId = routeId,
+                SharedToId = shareToId,
+                Date = System.DateTimeOffset.UtcNow,
+                Status = RouteShare.AcceptanceStatus.Sent
+            });
+            await _context.SaveChangesAsync();
+            return Success();
+        }
+
+        public async Task<ServiceResult> AcceptShare(int routeId, int shareToId)
+        {
+            var share = await _context.RouteShares.FirstOrDefaultAsync(x => x.RouteId == routeId && x.SharedToId == shareToId);
+            if (share == null)
+                return NotFound("RouteShare not found");
+            share.Status = RouteShare.AcceptanceStatus.Shared;
             await _context.SaveChangesAsync();
             return Success();
         }
