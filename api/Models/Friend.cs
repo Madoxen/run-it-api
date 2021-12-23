@@ -19,11 +19,12 @@ namespace Api.Models
         public User Receiver { get; set; }
 
         public AcceptanceStatus Status { get; set; }
+
+        public enum AcceptanceStatus
+        {
+            Requested = 0,
+            Friends = 1,
+        }
     }
 
-    public enum AcceptanceStatus
-    {
-        Requested = 0,
-        Friends = 1,
-    }
 }

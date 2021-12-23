@@ -29,15 +29,8 @@ namespace Api.Handlers
                 return;
             }
 
-            var shareResult = await _shareService.GetRouteShare(route.Id, userId);
-            if (shareResult.Value == null)
-            {
-                context.Fail();
-                return;
-            }
-
-            var share = shareResult.Value;
-            if (share.SharedToId == userId)
+            var share = await _shareService.GetRouteShare(route.Id, userId);
+            if (share?.SharedToId == userId)
             {
                 context.Succeed(requirement);
                 return;

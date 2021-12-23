@@ -71,7 +71,7 @@ namespace Api.Tests
                     Requester = friend,
                     ReceiverId = user.Id,
                     RequesterId = friend.Id,
-                    Status = AcceptanceStatus.Friends
+                    Status = Friend.AcceptanceStatus.Friends
                 },
                 new Friend()
                 {
@@ -80,7 +80,7 @@ namespace Api.Tests
                     Requester = requestedFriend,
                     ReceiverId = user.Id,
                     RequesterId = requestedFriend.Id,
-                    Status = AcceptanceStatus.Requested
+                    Status = Friend.AcceptanceStatus.Requested
                 });
 
                 context.SaveChanges();
@@ -181,7 +181,7 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 var result = await context.Friends.FirstOrDefaultAsync(x => x.ReceiverId == 1 && x.RequesterId == 3);
-                Assert.Equal(AcceptanceStatus.Friends, result.Status);
+                Assert.Equal(Friend.AcceptanceStatus.Friends, result.Status);
             }
         }
 
@@ -203,7 +203,7 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 var result = await context.Friends.FirstOrDefaultAsync(x => x.RequesterId == 1 && x.ReceiverId == 4);
-                Assert.Equal(AcceptanceStatus.Requested, result.Status);
+                Assert.Equal(Friend.AcceptanceStatus.Requested, result.Status);
             }
         }
 
@@ -230,7 +230,7 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 var result = await context.Friends.FirstOrDefaultAsync(x => x.RequesterId == 1 && x.ReceiverId == 4);
-                Assert.Equal(AcceptanceStatus.Friends, result.Status);
+                Assert.Equal(Friend.AcceptanceStatus.Friends, result.Status);
             }
         }
 

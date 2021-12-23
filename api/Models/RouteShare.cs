@@ -14,6 +14,13 @@ namespace Api.Models
         public int RouteId { get; set; }
         public User SharedTo { get; set; }
         public int SharedToId { get; set; }
+        public AcceptanceStatus Status { get; set; }
+
+        public enum AcceptanceStatus
+        {
+            Sent = 0,
+            Shared = 1,
+        }
     }
 
 }

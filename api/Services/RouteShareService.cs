@@ -12,7 +12,7 @@ namespace Api.Services
         Task<ServiceResult> ShareRouteWith(int routeId, int shareToId);
         Task<ServiceResult> RemoveShare(int routeId, int shareToId);
         Task<ServiceResult<List<RouteShare>>> GetSharesForUser(int userId);
-        Task<ServiceResult<RouteShare>> GetRouteShare(int routeId, int userId);
+        Task<RouteShare> GetRouteShare(int routeId, int userId);
     }
     public class RouteShareService : ServiceBase, IRouteShareService
     {
@@ -25,20 +25,34 @@ namespace Api.Services
 
         public async Task<ServiceResult> ShareRouteWith(int routeId, int shareToId)
         {
-            var check = await _context.Routes
+            var routeCheck = await _context.Routes
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == routeId);
 
-            var shareCheck = await _context.Users
+            var userCheck = await _context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == shareToId);
 
-            if (check == null)
+            if (routeCheck == null)
                 return NotFound("Route not found");
-            if (shareCheck == null)
+            if (userCheck == null)
                 return NotFound("User not found");
 
-            await _context.RouteShares.AddAsync(new RouteShare() { RouteId = routeId, SharedToId = shareToId, Date = System.DateTimeOffset.UtcNow });
+            var shareCheck = await _context.RouteShares.FirstOrDefaultAsync(x => x.RouteId == routeId && x.SharedToId == shareToId);
+            if (shareCheck == null)
+            {
+                await _context.RouteShares.AddAsync(new RouteShare()
+                {
+                    RouteId = routeId,
+                    SharedToId = shareToId,
+                    Date = System.DateTimeOffset.UtcNow,
+                    Status = RouteShare.AcceptanceStatus.Sent
+                });
+            }
+            else
+            {
+                shareCheck.Status = RouteShare.AcceptanceStatus.Shared;
+            }
             await _context.SaveChangesAsync();
             return Success();
         }
@@ -73,14 +87,11 @@ namespace Api.Services
         }
 
 
-        public async Task<ServiceResult<RouteShare>> GetRouteShare(int routeId, int userId)
+        public async Task<RouteShare> GetRouteShare(int routeId, int userId)
         {
             var result = await _context.RouteShares.AsNoTracking()
                 .Include(x => x.Route)
                 .FirstOrDefaultAsync(x => x.RouteId == routeId && x.SharedToId == userId);
-
-            if (result == null)
-                return NotFound("Share not found");
 
             return result;
         }

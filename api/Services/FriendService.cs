@@ -47,8 +47,8 @@ namespace Api.Services
             var reverseFriendCheck = await _context.Friends.FirstOrDefaultAsync(x =>
              x.ReceiverId == requesterId && x.RequesterId == receiverId);
 
-            if (friendCheck?.Status == AcceptanceStatus.Friends ||
-            reverseFriendCheck?.Status == AcceptanceStatus.Friends)
+            if (friendCheck?.Status == Friend.AcceptanceStatus.Friends ||
+            reverseFriendCheck?.Status == Friend.AcceptanceStatus.Friends)
                 return Conflict($"{receiverId} already is friends with {requesterId}");
 
 
@@ -58,11 +58,11 @@ namespace Api.Services
                     Date = System.DateTimeOffset.UtcNow,
                     ReceiverId = receiverId,
                     RequesterId = requesterId,
-                    Status = AcceptanceStatus.Requested
+                    Status = Friend.AcceptanceStatus.Requested
                 });
 
-            if (reverseFriendCheck?.Status == AcceptanceStatus.Requested)
-                reverseFriendCheck.Status = AcceptanceStatus.Friends;
+            if (reverseFriendCheck?.Status == Friend.AcceptanceStatus.Requested)
+                reverseFriendCheck.Status = Friend.AcceptanceStatus.Friends;
 
 
             await _context.SaveChangesAsync();
@@ -82,7 +82,7 @@ namespace Api.Services
 
             var results = await _context.Friends
             .Where(x => (x.ReceiverId == userId || x.RequesterId == userId)
-            && x.Status == AcceptanceStatus.Friends)
+            && x.Status == Friend.AcceptanceStatus.Friends)
             .Include(x => x.Receiver)
             .Include(x => x.Requester)
             .ToListAsync();
@@ -105,7 +105,7 @@ namespace Api.Services
 
             var results = await _context.Friends
             .Where(x => (x.ReceiverId == userId)
-            && x.Status == AcceptanceStatus.Requested)
+            && x.Status == Friend.AcceptanceStatus.Requested)
             .Include(x => x.Requester)
             .ToListAsync();
 

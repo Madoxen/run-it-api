@@ -121,11 +121,18 @@ namespace Api
                      policy.RequireAuthenticatedUser();
                      policy.Requirements.Add(new RouteUserOwnershipRequirement());
                  });
+                options.AddPolicy("CheckRouteShareUserIDResourceAccess", policy =>
+                 {
+                     policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+                     policy.RequireAuthenticatedUser();
+                     policy.Requirements.Add(new RouteShareUserOwnershipRequirement());
+                 });
             });
 
             services.AddScoped<IAuthorizationHandler, UserAuthorizationHandler>();
             services.AddScoped<IAuthorizationHandler, RunResourceAuthorizationHandler>();
             services.AddScoped<IAuthorizationHandler, RouteResourceAuthorizationHandler>();
+            services.AddScoped<IAuthorizationHandler, RouteShareResourceAuthorizationHandler>();
             services.AddScoped<IUserAuthService, AuthUserService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRunService, RunService>();
