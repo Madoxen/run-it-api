@@ -118,5 +118,26 @@ namespace Api.Controllers
                 return Unauthorized();
             }
         }
+
+        [HttpGet]
+        [Route("requests/{userId}")]
+        public async Task<ActionResult<List<RouteShareGetPayload>>> GetRequests(int userId)
+        {
+            var authorizationResult = await _authorizationService
+                    .AuthorizeAsync(User, userId, "CheckUserIDResourceAccess");
+
+            if (authorizationResult.Succeeded)
+            {
+                var result = await _routeShareService.GetShareRequestsForUser(userId);
+                if (result.Value == null)
+                    return (ActionResult)result.Result;
+                var list = result.Value;
+                return list.Select(x => new RouteShareGetPayload(x)).ToList();
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
     }
 }

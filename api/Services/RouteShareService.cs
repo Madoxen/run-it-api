@@ -13,6 +13,7 @@ namespace Api.Services
         Task<ServiceResult> AcceptShare(int routeId, int shareToId);
         Task<ServiceResult> RemoveShare(int routeId, int shareToId);
         Task<ServiceResult<List<RouteShare>>> GetSharesForUser(int userId);
+        Task<ServiceResult<List<RouteShare>>> GetShareRequestsForUser(int userId);
         Task<RouteShare> GetRouteShare(int routeId, int userId);
     }
     public class RouteShareService : ServiceBase, IRouteShareService
@@ -88,10 +89,25 @@ namespace Api.Services
                 .Include(x => x.Route)
                 .ThenInclude(x => x.User)
                 .Include(x => x.SharedTo)
-                .Where(x => x.SharedToId == userId)
+                .Where(x => x.SharedToId == userId && x.Status == RouteShare.AcceptanceStatus.Shared)
                 .ToList();
         }
 
+        public async Task<ServiceResult<List<RouteShare>>> GetShareRequestsForUser(int userId)
+        {
+            var userCheck = await _context.Users.AsNoTracking()
+                                                .FirstOrDefaultAsync(x => x.Id == userId);
+
+            if (userCheck == null)
+                return NotFound("User not found");
+
+            return _context.RouteShares.AsNoTracking()
+                .Include(x => x.Route)
+                .ThenInclude(x => x.User)
+                .Include(x => x.SharedTo)
+                .Where(x => x.SharedToId == userId && x.Status == RouteShare.AcceptanceStatus.Sent)
+                .ToList();
+        }
 
         public async Task<RouteShare> GetRouteShare(int routeId, int userId)
         {
