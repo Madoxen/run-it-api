@@ -30,7 +30,7 @@ namespace Api.Services
             if (await _context.Users.FirstOrDefaultAsync(x => x.Id == route.UserId) == null)
                 return NotFound("Cannot create route for non existing user");
 
-            _context.Routes.Add(route);
+            await _context.Routes.AddAsync(route);
             await _context.SaveChangesAsync();
             return route;
         }

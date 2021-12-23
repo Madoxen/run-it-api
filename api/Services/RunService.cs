@@ -78,17 +78,17 @@ namespace Api.Services
 
         public async Task<ServiceResult> UpdateRun(Run run)
         {
-            var check = _context.Runs
+            var check = await _context.Runs
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == run.Id);
 
-            var userCheck = _context.Users
+            var userCheck = await _context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == run.UserId);
 
-            if (await check == null)
+            if (check == null)
                 return NotFound("Run not found");
-            if (await userCheck == null)
+            if (userCheck == null)
                 return NotFound("Cannot update run with non existing user as a owner");
 
             _context.Runs.Update(run);

@@ -66,7 +66,7 @@ namespace Api.Services
 
         public async Task<User> CreateUser(User u)
         {
-            _context.Users.Add(u);
+            await _context.Users.AddAsync(u);
             await _context.SaveChangesAsync();
             return u;
         }
