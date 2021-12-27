@@ -98,17 +98,17 @@ namespace Api.Services
 
         public async Task<ServiceResult> ShareRouteWith(int routeId, int shareToId)
         {
-            var check = _context.Routes
+            var check = await _context.Routes
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == routeId);
 
-            var shareCheck = _context.Users
+            var shareCheck = await _context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == shareToId);
 
-            if (await check == null)
+            if (check == null)
                 return NotFound("Route not found");
-            if (await shareCheck == null)
+            if (shareCheck == null)
                 return NotFound("User not found");
 
             await _context.RouteShares.AddAsync(new RouteShare() { RouteId = routeId, SharedToId = shareToId, Date = System.DateTimeOffset.UtcNow });
