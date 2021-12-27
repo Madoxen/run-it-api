@@ -78,17 +78,17 @@ namespace Api.Services
 
         public async Task<ServiceResult> UpdateRoute(Route route)
         {
-            var check = _context.Routes
+            var check = await _context.Routes
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == route.Id);
 
-            var userCheck = _context.Users
+            var userCheck = await _context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == route.UserId);
 
-            if (await check == null)
+            if (check == null)
                 return NotFound("Route not found");
-            if (await userCheck == null)
+            if (userCheck == null)
                 return NotFound("Cannot update route with non existing user as a owner");
 
             _context.Routes.Update(route);
