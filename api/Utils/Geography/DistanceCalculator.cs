@@ -17,7 +17,7 @@ public static class DistanceCalculator
         double deltaLat = Math.Abs(a_lat - b_lat);
         double deltaLong = Math.Abs(a_long - b_long);
 
-        //https://en.wikipedia.org/wiki/Great-circle_distance
+        //https://en.wikipedia.org/wiki/Great-circle_distance  *Haversine 
         double angle = Math.Sqrt(
             Math.Pow(Math.Cos(b_lat) * Math.Sin(deltaLong), 2.0)
             + Math.Pow(Math.Cos(a_lat) * Math.Sin(b_lat) - Math.Sin(a_lat) * Math.Cos(b_lat) * Math.Cos(deltaLong), 2.0))

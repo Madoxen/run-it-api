@@ -40,6 +40,9 @@ namespace Utils.Geography
 
         public static uint CalculateTotalDistance(MapPoint[] points)
         {
+            if (points.Length < 2)
+                return 0;
+
             double distanceTotal = 0;
 
             for (int i = 1; i < points.Length; i++)
@@ -54,6 +57,9 @@ namespace Utils.Geography
 
         public static uint CalculateElevationDelta(MapPoint[] points)
         {
+            if (points.Length < 2)
+                return 0;
+
             uint heightMin = (uint)points[0].Height;
             uint heightMax = (uint)points[0].Height;
 
