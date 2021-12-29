@@ -75,7 +75,7 @@ namespace Api.Controllers
                         _authOptions.Google.IosID
                     },
                 });
-
+                //BUG user is being TRACKED 
                 //Create new account
                 //Check if the user already exists in DB
                 var sub = googleJWTPayload.Subject;
@@ -85,7 +85,7 @@ namespace Api.Controllers
 
                 //if user does not exists
                 //create an account
-                user = new User()
+                User newUser = new User()
                 {
                     GoogleId = sub,
                     FacebookId = null,
@@ -94,7 +94,7 @@ namespace Api.Controllers
                     LastName = googleJWTPayload.FamilyName,
                 };
 
-                await _userService.CreateUser(user);
+                user = await _userService.CreateUser(newUser);
                 // Returns the 'access_token' and the type in lower case
                 return CreateJwtAuthPayload(user.Id);
             }

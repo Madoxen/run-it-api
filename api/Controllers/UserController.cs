@@ -27,7 +27,7 @@ namespace Api.Controllers
 
         //Gets user profile information
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> Get(int id)
+        public async Task<ActionResult<UserGetPayload>> Get(int id)
         {
             User user = await _userService.GetUserById(id);
             if (user == null)
@@ -39,7 +39,7 @@ namespace Api.Controllers
 
             if (authorizationResult.Succeeded)
             {
-                return user;
+                return new UserGetPayload(user);
             }
             else
             {
@@ -74,8 +74,11 @@ namespace Api.Controllers
 
             if (authorizationResult.Succeeded)
             {
-                User user = payload.CreateModel();
-                var result = await _userService.UpdateUser(user);
+                User u = await _userService.GetUserById(payload.Id);
+                if (u == null)
+                    return NotFound($"User of {payload.Id} not found");
+                u.Weight = payload.Weight;
+                var result = await _userService.UpdateUser(u);
                 return result;
             }
             else

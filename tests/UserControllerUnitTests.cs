@@ -116,10 +116,10 @@ namespace Api.Tests
             UserController controller = CreateDefaultTestController(userServiceMock.Object);
 
             //Act
-            ActionResult<User> result = await controller.Get(1);
+            ActionResult<UserGetPayload> result = await controller.Get(1);
 
             //Assert
-            Assert.IsType<User>(result.Value);
+            Assert.IsType<UserGetPayload>(result.Value);
         }
 
 
@@ -133,7 +133,7 @@ namespace Api.Tests
             UserController controller = CreateDefaultTestController(userServiceMock.Object);
 
             //Act
-            ActionResult<User> result = await controller.Get(2);
+            ActionResult<UserGetPayload> result = await controller.Get(2);
 
             //Assert
             Assert.IsType<NotFoundResult>(result.Result);
@@ -181,8 +181,10 @@ namespace Api.Tests
             var user = new User();
             var mockPayload = new Mock<UserUpdatePayload>();
             mockPayload.Setup(x => x.CreateModel()).Returns(user);
+            
 
             var userServiceMock = new Mock<IUserService>();
+            userServiceMock.Setup(x => x.GetUserById(0)).ReturnsAsync(user);
             userServiceMock.Setup(x => x.UpdateUser(user)).ReturnsAsync(new SuccessServiceResult());
             UserController controller = CreateDefaultTestController(userServiceMock.Object);
 
