@@ -20,6 +20,8 @@ namespace Api.Models
         public string Email { get; set; }
         public string GivenName { get; set; }
         public string LastName { get; set; }
+        public uint DistanceLast30Days { get; set; }
+        public uint DistanceTotal { get; set; }
         public List<Run> Runs { get; set; } //user trainings
         public List<Route> Routes { get; set; } //saved user routes 
 

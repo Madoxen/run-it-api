@@ -9,6 +9,8 @@ namespace Api.Payloads
         public string Email { get; set; }
         public string GivenName { get; set; }
         public string LastName { get; set; }
+        public uint DistanceLast30Days { get; set; }
+        public uint DistanceTotal { get; set; }
 
         public UserGetPayload()
         {
@@ -22,6 +24,8 @@ namespace Api.Payloads
             Email = user.Email;
             GivenName = user.GivenName;
             LastName = user.LastName;
+            DistanceLast30Days = user.DistanceLast30Days;
+            DistanceTotal = user.DistanceTotal;
         }
 
     }

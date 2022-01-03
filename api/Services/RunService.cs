@@ -21,17 +21,22 @@ namespace Api.Services
     public class RunService : ServiceBase, IRunService
     {
         public readonly ApiContext _context;
-        public RunService(ApiContext context)
+        public readonly IUserService _userService;
+        public RunService(ApiContext context, IUserService userService)
         {
             _context = context;
+            _userService = userService;
         }
 
         public async Task<ServiceResult<Run>> CreateRun(Run run)
         {
             if (await _context.Users.FirstOrDefaultAsync(x => x.Id == run.UserId) == null)
                 return NotFound("Cannot create run for non existing user");
+            using var transaction = await _context.Database.BeginTransactionAsync();
             await _context.Runs.AddAsync(run);
             await _context.SaveChangesAsync();
+            await _userService.UpdateUserRunStats(run.UserId);
+            await transaction.CommitAsync();
             return run;
         }
 
@@ -60,8 +65,11 @@ namespace Api.Services
             if (runQueryResult == null)
                 return NotFound("Run not found");
 
+            using var transaction = await _context.Database.BeginTransactionAsync();
             _context.Runs.Remove(runQueryResult);
             await _context.SaveChangesAsync();
+            await _userService.UpdateUserRunStats(run.UserId);
+            await transaction.CommitAsync();
             return Success();
         }
 
@@ -71,8 +79,12 @@ namespace Api.Services
             if (run == null)
                 return NotFound("Run not found");
 
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
             _context.Runs.Remove(run);
             await _context.SaveChangesAsync();
+            await _userService.UpdateUserRunStats(run.UserId);
+            await transaction.CommitAsync();
             return Success();
         }
 
@@ -91,8 +103,12 @@ namespace Api.Services
             if (userCheck == null)
                 return NotFound("Cannot update run with non existing user as a owner");
 
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
             _context.Runs.Update(run);
             await _context.SaveChangesAsync();
+            await _userService.UpdateUserRunStats(run.UserId);
+            await transaction.CommitAsync();
             return Success();
         }
     }

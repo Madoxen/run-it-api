@@ -9,6 +9,7 @@ using System.Linq;
 using Xunit;
 using Api.Utils;
 using System.Collections.Generic;
+using Moq;
 
 namespace Api.Tests
 {
@@ -64,7 +65,8 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 //Arrange
-                RunService service = new RunService(context);
+                IUserService userServiceMock = new Mock<IUserService>().Object;
+                RunService service = new RunService(context, userServiceMock);
 
                 //Act
                 var result = await service.GetRunById(1);
@@ -81,7 +83,8 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 //Arrange
-                RunService service = new RunService(context);
+                IUserService userServiceMock = new Mock<IUserService>().Object;
+                RunService service = new RunService(context, userServiceMock);
 
                 //Act
                 var result = await service.GetRunById(2);
@@ -98,7 +101,8 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 //Arrange
-                RunService service = new RunService(context);
+                IUserService userServiceMock = new Mock<IUserService>().Object;
+                RunService service = new RunService(context, userServiceMock);
 
                 //Act
                 var result = await service.GetUserRuns(1);
@@ -115,7 +119,8 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 //Arrange
-                RunService service = new RunService(context);
+                IUserService userServiceMock = new Mock<IUserService>().Object;
+                RunService service = new RunService(context, userServiceMock);
 
                 //Act
                 var result = await service.GetUserRuns(2);
@@ -133,7 +138,8 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 //Arrange
-                RunService service = new RunService(context);
+                IUserService userServiceMock = new Mock<IUserService>().Object;
+                RunService service = new RunService(context, userServiceMock);
 
                 //Act
                 var result = await service.CreateRun(new Run() { UserId = 1, Id = 2 });
@@ -157,7 +163,8 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 //Arrange
-                RunService service = new RunService(context);
+                IUserService userServiceMock = new Mock<IUserService>().Object;
+                RunService service = new RunService(context, userServiceMock);
 
                 //Act
                 var result = await service.CreateRun(new Run() { UserId = 2, Id = 2 });
@@ -174,7 +181,8 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 //Arrange
-                RunService service = new RunService(context);
+                IUserService userServiceMock = new Mock<IUserService>().Object;
+                RunService service = new RunService(context, userServiceMock);
 
                 //Act
                 var result = await service.UpdateRun(new Run() { Id = 1, UserId = 1, Title = "xd" });
@@ -199,7 +207,8 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 //Arrange
-                RunService service = new RunService(context);
+                IUserService userServiceMock = new Mock<IUserService>().Object;
+                RunService service = new RunService(context, userServiceMock);
 
                 //Act
                 var result = await service.UpdateRun(new Run() { UserId = 2, Id = 1 });
@@ -216,7 +225,8 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 //Arrange
-                RunService service = new RunService(context);
+                IUserService userServiceMock = new Mock<IUserService>().Object;
+                RunService service = new RunService(context, userServiceMock);
 
                 //Act
                 var result = await service.RemoveRun(new Run() { Id = 1 });
@@ -240,7 +250,8 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 //Arrange
-                RunService service = new RunService(context);
+                IUserService userServiceMock = new Mock<IUserService>().Object;
+                RunService service = new RunService(context, userServiceMock);
 
                 //Act
                 var result = await service.RemoveRun(new Run() { Id = 2 });
@@ -257,7 +268,8 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 //Arrange
-                RunService service = new RunService(context);
+                IUserService userServiceMock = new Mock<IUserService>().Object;
+                RunService service = new RunService(context, userServiceMock);
 
                 //Act
                 var result = await service.RemoveRunById(1);
@@ -281,7 +293,8 @@ namespace Api.Tests
             using (ApiContext context = new ApiContext(_contextOptions))
             {
                 //Arrange
-                RunService service = new RunService(context);
+                IUserService userServiceMock = new Mock<IUserService>().Object;
+                RunService service = new RunService(context, userServiceMock);
 
                 //Act
                 var result = await service.RemoveRunById(2);

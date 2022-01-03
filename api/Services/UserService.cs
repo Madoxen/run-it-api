@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Api.Models;
@@ -12,6 +13,7 @@ namespace Api.Services
         Task<ServiceResult> RemoveUserById(int id);
         Task<ServiceResult> RemoveUser(User u);
         Task<ServiceResult> UpdateUser(User u);
+        Task<ServiceResult> UpdateUserRunStats(int userId);
         Task<User> CreateUser(User u);
     }
 
@@ -70,6 +72,31 @@ namespace Api.Services
             await _context.SaveChangesAsync();
             return u;
         }
-    }
 
+        public async Task<ServiceResult> UpdateUserRunStats(int userId)
+        {
+            var user = await _context.Users
+            .Include(x => x.Runs)
+            .FirstOrDefaultAsync();
+
+            if (user == null)
+                return NotFound($"User {userId} not found");
+
+            uint distanceTotal = 0;
+            uint distanceLast30Days = 0;
+            DateTimeOffset monthAgo = DateTimeOffset.UtcNow.AddMonths(-1);
+            foreach (Run r in user.Runs)
+            {
+                if (r.Date > monthAgo)
+                    distanceLast30Days += r.DistanceTotal;
+                distanceTotal += r.DistanceTotal;
+            }
+
+            user.DistanceLast30Days = distanceLast30Days;
+            user.DistanceTotal = distanceTotal;
+
+            await _context.SaveChangesAsync();
+            return Success();
+        }
+    }
 }

@@ -72,6 +72,7 @@ namespace Api.Controllers
             using var responseStream = await response.Content.ReadAsStreamAsync();
 
             var payload = await JsonSerializer.DeserializeAsync<TripPayload>(responseStream);
+             
             if (payload.Trips.Count <= 0)
                 return NotFound("Could not find any matching route");
             var pointArray = payload.Trips[0].Geometry.Coordinates.Select(x => new MapPoint(x[0], x[1]));

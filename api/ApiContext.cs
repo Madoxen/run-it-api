@@ -33,7 +33,7 @@ namespace Api
 
 
             modelBuilder.Entity<RouteShare>()
-            .HasKey(x => new { x.RouteId, x.SharedToId });
+            .HasKey(x => new { x.RouteId, x.SharedToId });   
         }
 
     }
