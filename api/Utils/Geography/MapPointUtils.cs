@@ -14,7 +14,7 @@ namespace Utils.Geography
                 double lon = BitConverter.ToDouble(rawPoints[(i + 8)..(i + 16)]);
                 double height = BitConverter.ToDouble(rawPoints[(i + 16)..(i + 24)]);
 
-                MapPoint p = new MapPoint(lat, lon, height);
+                MapPoint p = new MapPoint(lon, lat, height);
                 result[i / 24] = p;
             }
             return result;
