@@ -53,28 +53,6 @@ namespace Api.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("accept/{routeId}/{shareId}")]
-        public async Task<ActionResult> AcceptShare(int routeId, int shareId)
-        {
-            RouteShare targetShare = await _routeShareService.GetRouteShare(routeId, shareId);
-            if (targetShare == null)
-                return NotFound($"Route share {routeId} to {shareId} not found");
-
-            var authorizationResult = await _authorizationService
-                    .AuthorizeAsync(User, targetShare, "CheckRouteShareUserIDResourceAccess");
-
-            if (authorizationResult.Succeeded)
-            {
-                var result = await _routeShareService.AcceptShare(routeId, shareId);
-                return result;
-            }
-            else
-            {
-                return Unauthorized();
-            }
-        }
-
 
         [HttpDelete]
         [Route("{routeId}/{shareId}")]
@@ -119,25 +97,5 @@ namespace Api.Controllers
             }
         }
 
-        [HttpGet]
-        [Route("requests/{userId}")]
-        public async Task<ActionResult<List<RouteShareGetPayload>>> GetRequests(int userId)
-        {
-            var authorizationResult = await _authorizationService
-                    .AuthorizeAsync(User, userId, "CheckUserIDResourceAccess");
-
-            if (authorizationResult.Succeeded)
-            {
-                var result = await _routeShareService.GetShareRequestsForUser(userId);
-                if (result.Value == null)
-                    return (ActionResult)result.Result;
-                var list = result.Value;
-                return list.Select(x => new RouteShareGetPayload(x)).ToList();
-            }
-            else
-            {
-                return Unauthorized();
-            }
-        }
     }
 }

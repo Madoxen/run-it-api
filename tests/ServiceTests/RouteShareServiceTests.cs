@@ -67,7 +67,7 @@ namespace Api.Tests
                 context.Routes.Add(route2);
                 context.Users.Add(user);
                 context.Users.Add(user2);
-                context.RouteShares.Add(new RouteShare() { RouteId = 1, SharedToId = 2, Status = RouteShare.AcceptanceStatus.Shared });
+                context.RouteShares.Add(new RouteShare() { RouteId = 1, SharedToId = 2});
                 context.SaveChanges();
             }
         }

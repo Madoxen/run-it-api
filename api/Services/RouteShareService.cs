@@ -10,15 +10,12 @@ namespace Api.Services
     public interface IRouteShareService
     {
         Task<ServiceResult> ShareRouteWith(int routeId, int shareToId);
-        Task<ServiceResult> AcceptShare(int routeId, int shareToId);
         Task<ServiceResult> RemoveShare(int routeId, int shareToId);
         Task<ServiceResult<List<RouteShare>>> GetSharesForUser(int userId);
-        Task<ServiceResult<List<RouteShare>>> GetShareRequestsForUser(int userId);
         Task<RouteShare> GetRouteShare(int routeId, int userId);
     }
     public class RouteShareService : ServiceBase, IRouteShareService
     {
-
         private readonly ApiContext _context;
         public RouteShareService(ApiContext context)
         {
@@ -48,21 +45,11 @@ namespace Api.Services
                 RouteId = routeId,
                 SharedToId = shareToId,
                 Date = System.DateTimeOffset.UtcNow,
-                Status = RouteShare.AcceptanceStatus.Sent
             });
             await _context.SaveChangesAsync();
             return Success();
         }
 
-        public async Task<ServiceResult> AcceptShare(int routeId, int shareToId)
-        {
-            var share = await _context.RouteShares.FirstOrDefaultAsync(x => x.RouteId == routeId && x.SharedToId == shareToId);
-            if (share == null)
-                return NotFound("RouteShare not found");
-            share.Status = RouteShare.AcceptanceStatus.Shared;
-            await _context.SaveChangesAsync();
-            return Success();
-        }
 
         public async Task<ServiceResult> RemoveShare(int routeId, int shareToId)
         {
@@ -89,23 +76,7 @@ namespace Api.Services
                 .Include(x => x.Route)
                 .ThenInclude(x => x.User)
                 .Include(x => x.SharedTo)
-                .Where(x => x.SharedToId == userId && x.Status == RouteShare.AcceptanceStatus.Shared)
-                .ToList();
-        }
-
-        public async Task<ServiceResult<List<RouteShare>>> GetShareRequestsForUser(int userId)
-        {
-            var userCheck = await _context.Users.AsNoTracking()
-                                                .FirstOrDefaultAsync(x => x.Id == userId);
-
-            if (userCheck == null)
-                return NotFound("User not found");
-
-            return _context.RouteShares.AsNoTracking()
-                .Include(x => x.Route)
-                .ThenInclude(x => x.User)
-                .Include(x => x.SharedTo)
-                .Where(x => x.SharedToId == userId && x.Status == RouteShare.AcceptanceStatus.Sent)
+                .Where(x => x.SharedToId == userId)
                 .ToList();
         }
 
