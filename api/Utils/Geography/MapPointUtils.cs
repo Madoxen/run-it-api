@@ -60,21 +60,20 @@ namespace Utils.Geography
             if (points.Length < 2)
                 return 0;
 
-            uint heightMin = (uint)points[0].Height;
-            uint heightMax = (uint)points[0].Height;
+            int heightMin = (int)points[0].Height;
+            int heightMax = (int)points[0].Height;
 
-            for (int i = 1; i < points.Length; i++)
+            for (int i = 0; i < points.Length; i++)
             {
-                MapPoint A = points[i - 1];
-                MapPoint B = points[i];
+                MapPoint A = points[i];
 
-                if (heightMax < B.Height)
-                    heightMax = (uint)B.Height;
-                if (heightMin > B.Height)
-                    heightMin = (uint)B.Height;
+                if (heightMax < A.Height)
+                    heightMax = (int)A.Height;
+                if (heightMin > A.Height)
+                    heightMin = (int)A.Height;
             }
 
-            return heightMax - heightMin;
+            return (uint)Math.Abs(heightMax - heightMin);
         }
     }
 }
