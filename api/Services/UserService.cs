@@ -94,7 +94,8 @@ namespace Api.Services
 
             user.DistanceLast30Days = distanceLast30Days;
             user.DistanceTotal = distanceTotal;
-
+            
+            _context.Update(user);
             await _context.SaveChangesAsync();
             return Success();
         }
