@@ -33,7 +33,7 @@ namespace Api.Services
             if (await _context.Users.FirstOrDefaultAsync(x => x.Id == run.UserId) == null)
                 return NotFound("Cannot create run for non existing user");
             using var transaction = await _context.Database.BeginTransactionAsync();
-            await _context.Runs.AddAsync(run);
+            _context.Runs.Add(run);
             await _context.SaveChangesAsync();
             await _userService.UpdateUserRunStats(run.UserId);
             await transaction.CommitAsync();
